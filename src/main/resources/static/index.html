@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusChat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; overflow: hidden; }
+
+    /* LEFT */
+    #left { width: 260px; min-width: 260px; background: #16213e; display: flex; flex-direction: column; border-right: 1px solid #0f3460; }
+    #left-header { padding: 14px 16px; color: #e94560; font-size: 16px; font-weight: bold; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
+    #lang-btn { font-size: 11px; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+    #lang-btn:hover { background: #e94560; color: #fff; }
+
+    #auth-box { padding: 12px; border-bottom: 1px solid #0f3460; }
+    #auth-box input { width: 100%; padding: 7px 10px; margin-bottom: 6px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 13px; font-family: inherit; }
+    #auth-box input:focus { outline: none; border-color: #e94560; }
+    .auth-row { display: flex; gap: 6px; }
+    .auth-row button { flex: 1; padding: 7px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-family: inherit; }
+    #btn-login { background: #e94560; color: #fff; }
+    #btn-register { background: transparent; border: 1px solid #e94560!important; color: #e94560; }
+    #auth-status { font-size: 11px; margin-top: 6px; min-height: 15px; color: #aaa; }
+
+    #rooms-box { flex: 1; overflow-y: auto; padding: 10px 12px; }
+    #rooms-header { font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    #rooms-header span { cursor: pointer; color: #e94560; font-size: 14px; }
+    .room-row { display: flex; align-items: center; padding: 8px 10px; background: #0f3460; border-radius: 5px; margin-bottom: 5px; cursor: pointer; font-size: 13px; gap: 6px; }
+    .room-row:hover { background: #1a3a6e; }
+    .room-row.active { background: #e94560; }
+    .room-row .rname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .room-row .rbtn { font-size: 10px; background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 2px 7px; border-radius: 3px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+
+    #create-box { padding: 10px 12px; border-top: 1px solid #0f3460; }
+    #create-box input { width: 100%; padding: 7px 10px; margin-bottom: 6px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 13px; font-family: inherit; }
+    #create-box input:focus { outline: none; border-color: #e94560; }
+    #btn-create { width: 100%; padding: 7px; background: transparent; border: 1px solid #e94560; color: #e94560; border-radius: 5px; cursor: pointer; font-size: 13px; font-family: inherit; }
+    #btn-create:hover { background: #e94560; color: #fff; }
+
+    /* RIGHT */
+    #right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    #chat-header { padding: 13px 18px; background: #16213e; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
+    #room-title { color: #e94560; font-size: 15px; font-weight: bold; }
+    #ws-badge { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: #3a1a1a; color: #f44336; }
+    #ws-badge.on { background: #1a3a22; color: #4caf50; }
+
+    #msg-list { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
+    .bubble { max-width: 65%; padding: 8px 13px; border-radius: 8px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+    .bubble.in  { background: #16213e; border: 1px solid #0f3460; align-self: flex-start; }
+    .bubble.out { background: #e94560; align-self: flex-end; }
+    .bubble .bmeta { font-size: 10px; color: #aaa; margin-bottom: 2px; }
+    .bubble.out .bmeta { color: rgba(255,255,255,0.6); }
+    #empty-hint { text-align: center; color: #444; font-size: 13px; margin-top: 60px; }
+
+    #input-row { padding: 11px 14px; background: #16213e; border-top: 1px solid #0f3460; display: flex; gap: 8px; }
+    #msg-input { flex: 1; padding: 9px 13px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    #msg-input:focus { outline: none; border-color: #e94560; }
+    #msg-input:disabled { opacity: 0.35; }
+    #btn-send { padding: 9px 20px; background: #e94560; border: none; color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit; white-space: nowrap; }
+    #btn-send:disabled { background: #444; cursor: not-allowed; }
+
+    #log-box { height: 100px; background: #0a0a1a; border-top: 1px solid #0f3460; padding: 6px 12px; overflow-y: auto; font-size: 11px; font-family: monospace; }
+    .li { color: #4caf50; } .le { color: #f44336; } .lw { color: #ff9800; }
+  </style>
+</head>
+<body>
+
+<div id="left">
+  <div id="left-header">⚡ NexusChat <button id="lang-btn" onclick="toggleLang()">EN</button></div>
+
+  <div id="auth-box">
+    <input id="inp-user" value="testuser">
+    <input id="inp-pass" type="password" value="123456">
+    <div class="auth-row">
+      <button id="btn-login" onclick="doLogin()">Giriş</button>
+      <button id="btn-register" onclick="doRegister()">Kayıt</button>
+    </div>
+    <div id="auth-status"></div>
+  </div>
+
+  <div id="rooms-box">
+    <div id="rooms-header">
+      <span id="lbl-rooms">ODALAR</span>
+      <span onclick="loadRooms()" title="Yenile">↻</span>
+    </div>
+    <div id="room-list"></div>
+  </div>
+
+  <div id="create-box">
+    <input id="inp-room-name">
+    <button id="btn-create" onclick="createRoom()">+ Oda Oluştur</button>
+  </div>
+</div>
+
+<div id="right">
+  <div id="chat-header">
+    <span id="room-title">—</span>
+    <span id="ws-badge">● —</span>
+  </div>
+  <div id="msg-list"><div id="empty-hint">—</div></div>
+  <div id="input-row">
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+      <div id="typing-indicator" style="display:none;font-size:11px;color:#aaa;padding:0 4px;font-style:italic"></div>
+      <input id="msg-input" disabled
+        onkeydown="if(event.key==='Enter')sendMsg()"
+        oninput="onMsgInput()">
+    </div>
+    <button id="btn-send" disabled onclick="sendMsg()">Gönder</button>
+  </div>
+  <div id="log-box"></div>
+</div>
+
+<script>
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const LANG = {
+  tr: {
+    userPh:'Kullanıcı adı', passPh:'Şifre (min 6 karakter)',
+    login:'Giriş', register:'Kayıt',
+    rooms:'ODALAR', roomPh:'Oda adı...', createRoom:'+ Oda Oluştur',
+    join:'Katıl', send:'Gönder',
+    hint:'Bir oda seçin veya oluşturun',
+    msgPh:'Mesaj yaz... (Enter ile gönder)',
+    wsOn:'● Bağlı', wsOff:'● Bağlı değil',
+    authOk:'✓ {u} olarak giriş yapıldı',
+    noRooms:'Henüz oda yok',
+    langSwitch:'EN',
+    logLogin:'Giriş: {u}', logWsOn:'WebSocket bağlandı', logWsOff:'WebSocket koptu',
+    logJoin:'Odaya katıldı: {id}', logCreated:'Oda oluşturuldu: #{n}',
+    logSent:'Mesaj gönderildi', logHistory:'{n} mesaj yüklendi',
+    logSub:'Oda {id} abone olundu',
+    errPass:'Şifre en az 6 karakter olmalı',
+    errLogin:'Giriş başarısız', errRegister:'Kayıt başarısız',
+  },
+  en: {    userPh:'Username', passPh:'Password (min 6 chars)',
+    login:'Login', register:'Register',
+    rooms:'ROOMS', roomPh:'Room name...', createRoom:'+ Create Room',
+    join:'Join', send:'Send',
+    hint:'Select or create a room',
+    msgPh:'Type a message... (Enter to send)',
+    wsOn:'● Connected', wsOff:'● Disconnected',
+    authOk:'✓ Logged in as {u}',
+    noRooms:'No rooms yet',
+    langSwitch:'TR',
+    logLogin:'Login: {u}', logWsOn:'WebSocket connected', logWsOff:'WebSocket disconnected',
+    logJoin:'Joined room: {id}', logCreated:'Room created: #{n}',
+    logSent:'Message sent', logHistory:'{n} messages loaded',
+    logSub:'Subscribed room {id}',
+    errPass:'Password must be at least 6 characters',
+    errLogin:'Login failed', errRegister:'Register failed',
+  }
+};
+
+let curLang = 'tr';
+const T = (k, v={}) => {
+  let s = LANG[curLang][k] || k;
+  Object.entries(v).forEach(([a,b]) => s = s.replace('{'+a+'}', b));
+  return s;
+};
+
+function applyLang() {
+  document.documentElement.lang = curLang;
+  document.getElementById('inp-user').placeholder   = T('userPh');
+  document.getElementById('inp-pass').placeholder   = T('passPh');
+  document.getElementById('btn-login').textContent  = T('login');
+  document.getElementById('btn-register').textContent = T('register');
+  document.getElementById('lbl-rooms').textContent  = T('rooms');
+  document.getElementById('inp-room-name').placeholder = T('roomPh');
+  document.getElementById('btn-create').textContent = T('createRoom');
+  document.getElementById('btn-send').textContent   = T('send');
+  document.getElementById('msg-input').placeholder  = T('msgPh');
+  document.getElementById('lang-btn').textContent   = T('langSwitch');
+  const hint = document.getElementById('empty-hint');
+  if (hint) hint.textContent = T('hint');
+  const wb = document.getElementById('ws-badge');
+  if (wb) wb.textContent = wb.classList.contains('on') ? T('wsOn') : T('wsOff');
+  if (!curRoomId) document.getElementById('room-title').textContent = '—';
+  if (token) loadRooms();
+}
+
+function toggleLang() {
+  curLang = curLang === 'tr' ? 'en' : 'tr';
+  applyLang();
+}
+
+// ── state ─────────────────────────────────────────────────────────────────────
+let token = null, curUser = null, stomp = null, curRoomId = null, curSub = null, curTypingSub = null;
+let typingTimer = null, typingUsers = {};
+
+// ── log ───────────────────────────────────────────────────────────────────────
+function log(msg, t='i') {
+  const b = document.getElementById('log-box');
+  const d = document.createElement('div');
+  d.className = 'l'+t;
+  d.textContent = '['+new Date().toLocaleTimeString()+'] '+msg;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
+
+// ── auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  try {
+    const r = await fetch('/api/auth/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, password:p})
+    });
+    if (!r.ok) { log(T('errLogin')+' ('+r.status+')', 'e'); return; }
+    onAuth(await r.json());
+  } catch(e) { log(T('errLogin')+': '+e.message, 'e'); }
+}
+
+async function doRegister() {
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  if (p.length < 6) { log(T('errPass'), 'w'); return; }
+  try {
+    const r = await fetch('/api/auth/register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, email:u+'@nexus.chat', password:p})
+    });
+    if (!r.ok) { log(T('errRegister')+' ('+r.status+')', 'e'); return; }
+    onAuth(await r.json());
+  } catch(e) { log(T('errRegister')+': '+e.message, 'e'); }
+}
+
+function onAuth(data) {
+  token = data.token;
+  curUser = data.username;
+  document.getElementById('auth-status').innerHTML =
+    '<span style="color:#4caf50">'+T('authOk',{u:data.username})+'</span>';
+  log(T('logLogin',{u:data.username}));
+  loadRooms();
+  connectWS();
+}
+
+// ── websocket ─────────────────────────────────────────────────────────────────
+function connectWS() {
+  if (stomp && stomp.connected) return;
+  const sock = new SockJS('/ws');
+  stomp = Stomp.over(sock);
+  stomp.debug = null;
+  stomp.connect(
+    {Authorization:'Bearer '+token},
+    function() {
+      const b = document.getElementById('ws-badge');
+      b.textContent = T('wsOn'); b.className = 'on';
+      log(T('logWsOn'));
+      if (curRoomId) subRoom(curRoomId);
+    },
+    function() {
+      const b = document.getElementById('ws-badge');
+      b.textContent = T('wsOff'); b.className = '';
+      log(T('logWsOff'), 'e');
+    }
+  );
+}
+
+function subRoom(id) {
+  if (!stomp || !stomp.connected) return;
+  if (curSub) { curSub.unsubscribe(); curSub = null; }
+  if (curTypingSub) { curTypingSub.unsubscribe(); curTypingSub = null; }
+
+  curSub = stomp.subscribe('/topic/room.'+id, frame => {
+    addBubble(JSON.parse(frame.body));
+  });
+
+  // Typing indicator subscription
+  curTypingSub = stomp.subscribe('/topic/room.'+id+'.typing', frame => {
+    const data = JSON.parse(frame.body);
+    if (data.username !== curUser) {
+      showTyping(data.username, data.typing);
+    }
+  });
+
+  log(T('logSub',{id}));
+}
+
+// ── rooms ─────────────────────────────────────────────────────────────────────
+async function loadRooms() {
+  if (!token) return;
+  try {
+    const r = await fetch('/api/rooms', {headers:{Authorization:'Bearer '+token}});
+    renderRooms(await r.json());
+  } catch(e) { log('Rooms error: '+e.message, 'e'); }
+}
+
+function renderRooms(list) {
+  const el = document.getElementById('room-list');
+  el.innerHTML = '';
+  if (!list.length) {
+    const d = document.createElement('div');
+    d.style.cssText = 'color:#555;font-size:12px;padding:4px';
+    d.textContent = T('noRooms');
+    el.appendChild(d); return;
+  }
+  list.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'room-row' + (r.id === curRoomId ? ' active' : '');
+    row.id = 'room-'+r.id;
+
+    const name = document.createElement('span');
+    name.className = 'rname';
+    name.textContent = '# '+r.name;
+    name.onclick = () => openRoom(r.id, r.name);
+
+    const btn = document.createElement('button');
+    btn.className = 'rbtn';
+    btn.textContent = T('join');
+    btn.onclick = e => { e.stopPropagation(); joinThenOpen(r.id, r.name); };
+
+    row.appendChild(name);
+    row.appendChild(btn);
+
+    // Sil butonu — sadece oda sahibine göster
+    if (curUser && r.createdByUsername === curUser) {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'rbtn';
+      delBtn.textContent = '🗑';
+      delBtn.style.background = 'rgba(244,67,54,0.35)';
+      delBtn.onclick = e => { e.stopPropagation(); confirmDelete(r.id, r.name); };
+      row.appendChild(delBtn);
+    }
+
+    el.appendChild(row);
+  });
+}
+
+async function joinRoom(id) {
+  try {
+    const r = await fetch('/api/rooms/'+id+'/join', {
+      method:'POST', headers:{Authorization:'Bearer '+token}
+    });
+    if (r.ok) log(T('logJoin',{id}));
+  } catch(e) { /* already member — ignore */ }
+}
+
+async function joinThenOpen(id, name) {
+  await joinRoom(id);
+  openRoom(id, name);
+}
+
+async function confirmDelete(id, name) {
+  const msg = curLang === 'tr'
+    ? `"${name}" odasını silmek istediğinize emin misiniz?`
+    : `Are you sure you want to delete "${name}"?`;
+  if (!confirm(msg)) return;
+  await deleteRoom(id, name);
+}
+
+async function deleteRoom(id, name) {
+  try {
+    const r = await fetch('/api/rooms/'+id, {
+      method:'DELETE', headers:{Authorization:'Bearer '+token}
+    });
+    if (r.ok || r.status === 204) {
+      log(curLang === 'tr' ? `Oda silindi: #${name}` : `Room deleted: #${name}`);
+      // Eğer silinen oda açıksa sıfırla
+      if (curRoomId === id) {
+        curRoomId = null;
+        if (curSub) { curSub.unsubscribe(); curSub = null; }
+        document.getElementById('room-title').textContent = '—';
+        document.getElementById('msg-list').innerHTML = '<div id="empty-hint">'+T('hint')+'</div>';
+        document.getElementById('msg-input').disabled = true;
+        document.getElementById('btn-send').disabled = true;
+      }
+      loadRooms();
+    } else {
+      const txt = await r.text();
+      log((curLang === 'tr' ? 'Silinemedi: ' : 'Delete failed: ') + txt, 'e');
+    }
+  } catch(e) { log('Error: '+e.message, 'e'); }
+}
+
+async function openRoom(id, name) {
+  curRoomId = id;
+  document.getElementById('room-title').textContent = '# '+name;
+  document.getElementById('msg-input').disabled = false;
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('msg-list').innerHTML = '';
+
+  // highlight
+  document.querySelectorAll('.room-row').forEach(e => e.classList.remove('active'));
+  const row = document.getElementById('room-'+id);
+  if (row) row.classList.add('active');
+
+  await loadHistory(id);
+  subRoom(id);
+}
+
+async function createRoom() {
+  if (!token) return;
+  const name = document.getElementById('inp-room-name').value.trim();
+  if (!name) return;
+  try {
+    const r = await fetch('/api/rooms', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({name, type:'PUBLIC'})
+    });
+    if (!r.ok) { log('Create room error '+r.status, 'e'); return; }
+    const room = await r.json();
+    document.getElementById('inp-room-name').value = '';
+    log(T('logCreated',{n:room.name}));
+    await loadRooms();
+    openRoom(room.id, room.name);
+  } catch(e) { log('Error: '+e.message, 'e'); }
+}
+
+// ── messages ──────────────────────────────────────────────────────────────────
+async function loadHistory(id) {
+  try {
+    const r = await fetch('/api/messages/room/'+id+'?page=0&size=50', {
+      headers:{Authorization:'Bearer '+token}
+    });
+    const msgs = await r.json();
+    msgs.reverse().forEach(m => addBubble(m, true));
+    log(T('logHistory',{n:msgs.length}));
+  } catch(e) { log('History error: '+e.message, 'e'); }
+}
+
+function sendMsg() {
+  const inp = document.getElementById('msg-input');
+  const txt = inp.value.trim();
+  if (!txt || !stomp || !stomp.connected || !curRoomId) return;
+  stomp.send('/app/chat.send', {}, JSON.stringify({roomId:curRoomId, content:txt, type:'TEXT'}));
+  // Yazma durumunu kapat
+  sendTyping(false);
+  inp.value = '';
+  log(T('logSent'));
+}
+
+// Typing indicator gönder
+function sendTyping(isTyping) {
+  if (!stomp || !stomp.connected || !curRoomId) return;
+  stomp.send('/app/chat.typing', {}, JSON.stringify({roomId: curRoomId, typing: isTyping}));
+}
+
+// Input değişince typing gönder, 2sn sonra otomatik kapat
+function onMsgInput() {
+  if (!curRoomId) return;
+  sendTyping(true);
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => sendTyping(false), 2000);
+}
+// Typing göster/gizle
+function showTyping(username, isTyping) {
+  if (isTyping) {
+    typingUsers[username] = true;
+  } else {
+    delete typingUsers[username];
+  }
+  const names = Object.keys(typingUsers);
+  const el = document.getElementById('typing-indicator');
+  if (!el) return;
+  if (names.length === 0) {
+    el.textContent = '';
+    el.style.display = 'none';
+  } else {
+    const suffix = curLang === 'tr' ? ' yazıyor...' : ' is typing...';
+    el.textContent = names.join(', ') + suffix;
+    el.style.display = 'block';
+  }
+}
+
+function addBubble(msg) {
+  const list = document.getElementById('msg-list');
+  const hint = document.getElementById('empty-hint');
+  if (hint) hint.remove();
+
+  const isOwn = msg.senderUsername === curUser;
+  const time = new Date(msg.createdAt).toLocaleTimeString(
+    curLang === 'tr' ? 'tr-TR' : 'en-US', {hour:'2-digit', minute:'2-digit'}
+  );
+
+  const div = document.createElement('div');
+  div.className = 'bubble '+(isOwn ? 'out' : 'in');
+
+  const meta = document.createElement('div');
+  meta.className = 'bmeta';
+  meta.textContent = (isOwn ? '' : (msg.senderDisplayName||msg.senderUsername)+' · ')+time;
+
+  const body = document.createElement('div');
+  body.textContent = msg.content;   // textContent = UTF-8 güvenli, XSS yok
+
+  div.appendChild(meta);
+  div.appendChild(body);
+  list.appendChild(div);
+  list.scrollTop = list.scrollHeight;
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+applyLang();
+</script>
+</body>
+</html>
