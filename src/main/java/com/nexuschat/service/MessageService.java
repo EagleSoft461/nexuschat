@@ -65,9 +65,17 @@ public class MessageService {
         return response;
     }
 
-    public List<MessageResponse> getRoomMessages(Long roomId, int page, int size) {
+    @Transactional(readOnly = true)
+    public List<MessageResponse> getRoomMessages(Long roomId, int page, int size, String username) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        if (!roomMemberRepository.existsByRoomAndUser(room, user)) {
+            throw new IllegalStateException("You are not a member of this room");
+        }
 
         Page<Message> messages = messageRepository.findByRoomAndDeletedFalseOrderByCreatedAtDesc(
                 room, PageRequest.of(page, size));
@@ -80,7 +88,7 @@ public class MessageService {
 
     @Transactional
     public void deleteMessage(Long messageId, String username) {
-        Message message = messageRepository.findById(messageId)
+        Message message = messageRepository.findByIdWithSender(messageId)
                 .orElseThrow(() -> new IllegalArgumentException("Message not found: " + messageId));
 
         if (!message.getSender().getUsername().equals(username)) {

@@ -42,10 +42,22 @@ public class PresenceService {
     }
 
     public Set<String> getOnlineUsers() {
-        Set<String> keys = redisTemplate.keys(PRESENCE_KEY_PREFIX + "*");
-        if (keys == null) return Set.of();
-        return keys.stream()
-                .map(k -> k.replace(PRESENCE_KEY_PREFIX, ""))
-                .collect(java.util.stream.Collectors.toSet());
+        Set<String> usernames = new java.util.HashSet<>();
+        redisTemplate.execute((org.springframework.data.redis.core.RedisCallback<Void>) connection -> {
+            org.springframework.data.redis.core.Cursor<byte[]> cursor = connection.scan(
+                    org.springframework.data.redis.core.ScanOptions.scanOptions()
+                            .match(PRESENCE_KEY_PREFIX + "*")
+                            .count(100)
+                            .build());
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next(), java.nio.charset.StandardCharsets.UTF_8);
+                if (key.startsWith(PRESENCE_KEY_PREFIX)) {
+                    usernames.add(key.substring(PRESENCE_KEY_PREFIX.length()));
+                }
+            }
+            try { cursor.close(); } catch (Exception ignored) {}
+            return null;
+        });
+        return usernames;
     }
 }

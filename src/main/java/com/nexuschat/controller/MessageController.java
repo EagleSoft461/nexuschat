@@ -31,8 +31,9 @@ public class MessageController {
     public ResponseEntity<List<MessageResponse>> getRoomMessages(
             @PathVariable Long roomId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        return ResponseEntity.ok(messageService.getRoomMessages(roomId, page, size));
+            @RequestParam(defaultValue = "50") int size,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(messageService.getRoomMessages(roomId, page, size, userDetails.getUsername()));
     }
 
     @DeleteMapping("/{messageId}")

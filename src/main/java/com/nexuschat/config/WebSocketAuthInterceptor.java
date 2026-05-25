@@ -30,20 +30,33 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "Missing or invalid Authorization header");
+            }
+
+            String token = authHeader.substring(7);
+            try {
                 String username = jwtUtil.extractUsername(token);
-
-                if (username != null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                    if (jwtUtil.validateToken(token, userDetails)) {
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails, null, userDetails.getAuthorities());
-                        accessor.setUser(authentication);
-                    }
+                if (username == null) {
+                    throw new org.springframework.security.access.AccessDeniedException("Invalid token");
                 }
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (!jwtUtil.validateToken(token, userDetails)) {
+                    throw new org.springframework.security.access.AccessDeniedException("Token validation failed");
+                }
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                accessor.setUser(authentication);
+
+            } catch (org.springframework.security.access.AccessDeniedException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new org.springframework.security.access.AccessDeniedException("Token processing failed: " + e.getMessage());
             }
         }
 

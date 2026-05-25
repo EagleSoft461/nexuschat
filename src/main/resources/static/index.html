@@ -177,12 +177,14 @@ function applyLang() {
   const wb = document.getElementById('ws-badge');
   if (wb) wb.textContent = wb.classList.contains('on') ? T('wsOn') : T('wsOff');
   if (!curRoomId) document.getElementById('room-title').textContent = '—';
-  if (token) loadRooms();
 }
 
 function toggleLang() {
   curLang = curLang === 'tr' ? 'en' : 'tr';
   applyLang();
+  // Oda listesini yeniden render et (sadece mevcut veriyle, yeni istek atmadan)
+  const roomListEl = document.getElementById('room-list');
+  if (roomListEl && token) loadRooms();
 }
 
 // ── state ─────────────────────────────────────────────────────────────────────
@@ -286,7 +288,10 @@ async function loadRooms() {
   if (!token) return;
   try {
     const r = await fetch('/api/rooms', {headers:{Authorization:'Bearer '+token}});
-    renderRooms(await r.json());
+    if (!r.ok) { log('Rooms error: '+r.status, 'e'); return; }
+    const data = await r.json();
+    if (!Array.isArray(data)) { log('Rooms error: unexpected response', 'e'); return; }
+    renderRooms(data);
   } catch(e) { log('Rooms error: '+e.message, 'e'); }
 }
 
@@ -418,7 +423,9 @@ async function loadHistory(id) {
     const r = await fetch('/api/messages/room/'+id+'?page=0&size=50', {
       headers:{Authorization:'Bearer '+token}
     });
+    if (!r.ok) { log('History error: '+r.status, 'e'); return; }
     const msgs = await r.json();
+    if (!Array.isArray(msgs)) { log('History error: unexpected response', 'e'); return; }
     msgs.reverse().forEach(m => addBubble(m, true));
     log(T('logHistory',{n:msgs.length}));
   } catch(e) { log('History error: '+e.message, 'e'); }

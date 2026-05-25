@@ -13,10 +13,11 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S nexuschat && adduser -S nexuschat -G nexuschat
-USER nexuschat
 
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=nexuschat:nexuschat /app/target/*.jar app.jar
+
+USER nexuschat
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=docker", "app.jar"]
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]

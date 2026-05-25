@@ -50,6 +50,10 @@ public class RoomService {
                 .build();
         roomMemberRepository.save(member);
 
+        // Reload with members fetched to avoid LazyInitializationException in RoomResponse.from()
+        room = roomRepository.findByIdWithCreator(room.getId())
+                .orElseThrow(() -> new IllegalStateException("Room not found after save"));
+
         return RoomResponse.from(room);
     }
 
@@ -71,20 +75,21 @@ public class RoomService {
     }
 
     public RoomResponse getRoomById(Long roomId) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCreator(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
         return RoomResponse.from(room);
     }
 
     @Transactional
     public void joinRoom(Long roomId, String username) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCreator(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        // Zaten üyeyse sessizce geç
         if (roomMemberRepository.existsByRoomAndUser(room, user)) {
-            throw new IllegalStateException("User is already a member of this room");
+            return;
         }
 
         RoomMember member = RoomMember.builder()
@@ -97,11 +102,24 @@ public class RoomService {
 
     @Transactional
     public void leaveRoom(Long roomId, String username) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCreator(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         roomMemberRepository.deleteByRoomAndUser(room, user);
+    }
+
+    @Transactional
+    public void deleteRoom(Long roomId, String username) {
+        Room room = roomRepository.findByIdWithCreator(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+
+        // Sadece oda sahibi silebilir
+        if (!room.getCreatedBy().getUsername().equals(username)) {
+            throw new IllegalStateException("Only the room owner can delete this room");
+        }
+
+        roomRepository.delete(room);
     }
 }
