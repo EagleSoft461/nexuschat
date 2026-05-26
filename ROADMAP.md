@@ -90,4 +90,6 @@ This document tracks the development progress and future plans for NexusChat.
 
 | Version | Date | Description |
 |---|---|---|
-| v1.0.0 | 2026-05-26 | First stable release — Sprint 1-3 complete. Full real-time chat with auth, rooms, DM, read receipts, message editing, file attachments, presence, unread counts. |
+| v1.0.0 | — | Initial release — Sprint 1 complete. Core infrastructure: JWT auth, WebSocket, Redis Pub/Sub, PostgreSQL, Docker. |
+| v2.0.0 | — | Sprint 2 complete. Presence system, typing indicator, WebSocket auth interceptor, global error handling, multi-language UI, room deletion, Swagger. |
+| v3.0.0 | 2026-05-26 | Sprint 3 complete. Read receipts, message editing, file/image attachments, private rooms with invite, direct messages (DM), unread message count, UI enhancements, critical bug fixes. |
