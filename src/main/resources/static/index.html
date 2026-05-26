@@ -313,12 +313,23 @@ function subRoom(id) {
 async function loadRooms() {
   if (!token) return;
   try {
-    const r = await fetch('/api/rooms', {headers:{Authorization:'Bearer '+token}});
-    if (!r.ok) { log('Rooms error: '+r.status, 'e'); return; }
-    const data = await r.json();
-    if (!Array.isArray(data)) { log('Rooms error: unexpected response', 'e'); return; }
+    // Fetch both public rooms and user's own rooms, merge and deduplicate
+    const [pubRes, myRes] = await Promise.all([
+      fetch('/api/rooms', {headers:{Authorization:'Bearer '+token}}),
+      fetch('/api/rooms/my', {headers:{Authorization:'Bearer '+token}})
+    ]);
+    if (!pubRes.ok && !myRes.ok) { log('Rooms error: '+pubRes.status, 'e'); return; }
+    const pubData = pubRes.ok ? await pubRes.json() : [];
+    const myData  = myRes.ok  ? await myRes.json()  : [];
+    if (!Array.isArray(pubData) || !Array.isArray(myData)) { log('Rooms error: unexpected response', 'e'); return; }
+    // Merge, deduplicate by id
+    const seen = new Set();
+    const merged = [...pubData, ...myData].filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id); return true;
+    });
     await loadUnreadCounts();
-    renderRooms(data);
+    renderRooms(merged);
   } catch(e) { log('Rooms error: '+e.message, 'e'); }
 }
 async function loadUnreadCounts() {
