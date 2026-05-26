@@ -1,5 +1,6 @@
 package com.nexuschat.controller;
 
+import com.nexuschat.dto.request.EditMessageRequest;
 import com.nexuschat.dto.request.SendMessageRequest;
 import com.nexuschat.service.MessageService;
 import com.nexuschat.service.PresenceService;
@@ -35,6 +36,40 @@ public class WebSocketController {
         messageService.sendMessage(request, principal.getName());
     }
 
+    @MessageMapping("/chat.edit")
+    public void editMessage(@Valid @Payload Map<String, Object> payload, Principal principal) {
+        if (principal == null) return;
+        Object msgIdObj = payload.get("messageId");
+        Object contentObj = payload.get("content");
+        if (msgIdObj == null || contentObj == null) return;
+        try {
+            Long messageId = Long.valueOf(msgIdObj.toString());
+            EditMessageRequest req = new EditMessageRequest();
+            req.setContent(contentObj.toString());
+            messageService.editMessage(messageId, req, principal.getName());
+        } catch (NumberFormatException ignored) {}
+    }
+
+    @MessageMapping("/chat.read")
+    public void markRead(@Payload Map<String, Object> payload, Principal principal) {
+        if (principal == null) return;
+        Object roomIdObj = payload.get("roomId");
+        Object msgIdObj = payload.get("messageId");
+        if (roomIdObj == null || msgIdObj == null) return;
+        try {
+            Long roomId = Long.valueOf(roomIdObj.toString());
+            Long messageId = Long.valueOf(msgIdObj.toString());
+            messageService.markAsRead(roomId, messageId, principal.getName());
+
+            // Broadcast read receipt to room so others can see it
+            Map<String, Object> event = new HashMap<>();
+            event.put("username", principal.getName());
+            event.put("messageId", messageId);
+            event.put("roomId", roomId);
+            messagingTemplate.convertAndSend("/topic/room." + roomId + ".read", event);
+        } catch (NumberFormatException ignored) {}
+    }
+
     @MessageMapping("/presence.ping")
     public void presencePing(Principal principal) {
         if (principal == null) return;
@@ -54,9 +89,7 @@ public class WebSocketController {
             event.put("typing", isTyping);
             event.put("roomId", roomId);
             messagingTemplate.convertAndSend("/topic/room." + roomId + ".typing", event);
-        } catch (NumberFormatException ignored) {
-            // geçersiz roomId — sessizce yoksay
-        }
+        } catch (NumberFormatException ignored) {}
     }
 
     @MessageMapping("/presence.list")

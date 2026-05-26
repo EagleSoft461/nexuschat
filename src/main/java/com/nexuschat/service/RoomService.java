@@ -122,4 +122,82 @@ public class RoomService {
 
         roomRepository.delete(room);
     }
+
+    /**
+     * Invite a user to a PRIVATE room. Only OWNER or ADMIN can invite.
+     */
+    @Transactional
+    public void inviteUser(Long roomId, String inviterUsername, String targetUsername) {
+        Room room = roomRepository.findByIdWithCreator(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+
+        if (room.getType() == Room.RoomType.PUBLIC) {
+            throw new IllegalStateException("Public rooms do not require invitations");
+        }
+
+        User inviter = userRepository.findByUsername(inviterUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + inviterUsername));
+
+        RoomMember inviterMember = roomMemberRepository.findByRoomAndUser(room, inviter)
+                .orElseThrow(() -> new IllegalStateException("You are not a member of this room"));
+
+        if (inviterMember.getRole() == RoomMember.MemberRole.MEMBER) {
+            throw new IllegalStateException("Only OWNER or ADMIN can invite users");
+        }
+
+        User target = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + targetUsername));
+
+        if (roomMemberRepository.existsByRoomAndUser(room, target)) {
+            return; // already a member — silently ignore
+        }
+
+        RoomMember newMember = RoomMember.builder()
+                .room(room)
+                .user(target)
+                .role(RoomMember.MemberRole.MEMBER)
+                .build();
+        roomMemberRepository.save(newMember);
+    }
+
+    /**
+     * Create or retrieve an existing Direct Message room between two users.
+     */
+    @Transactional
+    public RoomResponse createOrGetDm(String requesterUsername, String targetUsername) {
+        if (requesterUsername.equals(targetUsername)) {
+            throw new IllegalArgumentException("Cannot create a DM with yourself");
+        }
+
+        User requester = userRepository.findByUsername(requesterUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + requesterUsername));
+        User target = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + targetUsername));
+
+        // Return existing DM if it already exists
+        return roomRepository.findDirectMessageRoom(requester, target)
+                .map(RoomResponse::from)
+                .orElseGet(() -> {
+                    // DM room name is deterministic: sorted usernames joined with ":"
+                    String dmName = java.util.stream.Stream.of(requesterUsername, targetUsername)
+                            .sorted()
+                            .collect(java.util.stream.Collectors.joining(":"));
+
+                    Room room = Room.builder()
+                            .name(dmName)
+                            .type(Room.RoomType.DIRECT)
+                            .createdBy(requester)
+                            .build();
+                    room = roomRepository.save(room);
+
+                    roomMemberRepository.save(RoomMember.builder()
+                            .room(room).user(requester).role(RoomMember.MemberRole.OWNER).build());
+                    roomMemberRepository.save(RoomMember.builder()
+                            .room(room).user(target).role(RoomMember.MemberRole.MEMBER).build());
+
+                    room = roomRepository.findByIdWithCreator(room.getId())
+                            .orElseThrow(() -> new IllegalStateException("DM room not found after save"));
+                    return RoomResponse.from(room);
+                });
+    }
 }

@@ -1,9 +1,12 @@
 package com.nexuschat.service;
 
+import com.nexuschat.dto.request.EditMessageRequest;
 import com.nexuschat.dto.request.SendMessageRequest;
 import com.nexuschat.dto.response.MessageResponse;
+import com.nexuschat.dto.response.UnreadCountResponse;
 import com.nexuschat.model.Message;
 import com.nexuschat.model.Room;
+import com.nexuschat.model.RoomMember;
 import com.nexuschat.model.User;
 import com.nexuschat.repository.MessageRepository;
 import com.nexuschat.repository.RoomMemberRepository;
@@ -16,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,9 +53,22 @@ public class MessageService {
             throw new IllegalStateException("User is not a member of this room");
         }
 
+        // Validate: TEXT must have content, FILE/IMAGE must have fileUrl
+        if (request.getType() == Message.MessageType.TEXT
+                && (request.getContent() == null || request.getContent().isBlank())) {
+            throw new IllegalArgumentException("Content is required for text messages");
+        }
+        if ((request.getType() == Message.MessageType.FILE
+                || request.getType() == Message.MessageType.IMAGE)
+                && (request.getFileUrl() == null || request.getFileUrl().isBlank())) {
+            throw new IllegalArgumentException("fileUrl is required for file/image messages");
+        }
+
         Message message = Message.builder()
-                .content(request.getContent())
+                .content(request.getContent() != null ? request.getContent() : "")
                 .type(request.getType())
+                .fileUrl(request.getFileUrl())
+                .fileName(request.getFileName())
                 .sender(sender)
                 .room(room)
                 .build();
@@ -87,6 +104,29 @@ public class MessageService {
     }
 
     @Transactional
+    public MessageResponse editMessage(Long messageId, EditMessageRequest request, String username) {
+        Message message = messageRepository.findByIdWithSender(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found: " + messageId));
+
+        if (!message.getSender().getUsername().equals(username)) {
+            throw new IllegalStateException("You can only edit your own messages");
+        }
+        if (message.isDeleted()) {
+            throw new IllegalStateException("Cannot edit a deleted message");
+        }
+
+        message.setContent(request.getContent());
+        message.setEdited(true);
+        message.setEditedAt(LocalDateTime.now());
+        message = messageRepository.save(message);
+
+        MessageResponse response = MessageResponse.from(message);
+        // Broadcast the edit event via Redis
+        redisMessagePublisher.publishMessage("chat:" + message.getRoom().getId(), response);
+        return response;
+    }
+
+    @Transactional
     public void deleteMessage(Long messageId, String username) {
         Message message = messageRepository.findByIdWithSender(messageId)
                 .orElseThrow(() -> new IllegalArgumentException("Message not found: " + messageId));
@@ -97,5 +137,70 @@ public class MessageService {
 
         message.setDeleted(true);
         messageRepository.save(message);
+    }
+
+    /**
+     * Mark all messages up to (and including) the given messageId as read for this user.
+     */
+    @Transactional
+    public void markAsRead(Long roomId, Long messageId, String username) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        RoomMember member = roomMemberRepository.findByRoomAndUser(room, user)
+                .orElseThrow(() -> new IllegalStateException("You are not a member of this room"));
+
+        // Only advance the pointer, never go backwards
+        if (member.getLastReadMessageId() == null || messageId > member.getLastReadMessageId()) {
+            member.setLastReadMessageId(messageId);
+            roomMemberRepository.save(member);
+        }
+    }
+
+    /**
+     * Returns the number of unread messages in a room for the given user.
+     */
+    @Transactional(readOnly = true)
+    public UnreadCountResponse getUnreadCount(Long roomId, String username) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        RoomMember member = roomMemberRepository.findByRoomAndUser(room, user)
+                .orElseThrow(() -> new IllegalStateException("You are not a member of this room"));
+
+        long unread;
+        if (member.getLastReadMessageId() == null) {
+            unread = messageRepository.countByRoomAndDeletedFalse(room);
+        } else {
+            unread = messageRepository.countUnreadMessages(room, member.getLastReadMessageId());
+        }
+
+        return new UnreadCountResponse(roomId, unread);
+    }
+
+    /**
+     * Returns unread counts for all rooms the user is a member of.
+     */
+    @Transactional(readOnly = true)
+    public List<UnreadCountResponse> getAllUnreadCounts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        return roomMemberRepository.findByUser(user).stream()
+                .map(member -> {
+                    long unread;
+                    if (member.getLastReadMessageId() == null) {
+                        unread = messageRepository.countByRoomAndDeletedFalse(member.getRoom());
+                    } else {
+                        unread = messageRepository.countUnreadMessages(
+                                member.getRoom(), member.getLastReadMessageId());
+                    }
+                    return new UnreadCountResponse(member.getRoom().getId(), unread);
+                })
+                .collect(Collectors.toList());
     }
 }

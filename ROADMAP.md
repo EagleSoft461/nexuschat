@@ -18,21 +18,25 @@ This document tracks the development progress and future plans for NexusChat.
 
 ---
 
-## 🚧 Sprint 2 — Presence & Polish (In Progress)
+## ✅ Sprint 2 — Presence & Polish (Completed)
 
-- [ ] Presence system test (online/offline/typing)
-- [ ] `WebSocketAuthInterceptor` — validate JWT on CONNECT, reject invalid tokens
-- [ ] Error handling — global exception handler (`@ControllerAdvice`)
-- [ ] Input validation responses — proper 400 responses with field errors
-- [ ] Swagger / OpenAPI documentation
-- [ ] Fix `open-in-view` warning in JPA config
-- [ ] Remove hardcoded dialect from `application.yml`
+- [x] Presence system — online/offline tracking via Redis
+- [x] Typing indicator — broadcast `{username} is typing...` via WebSocket
+- [x] `WebSocketAuthInterceptor` — validate JWT on CONNECT, reject invalid tokens
+- [x] Error handling — global exception handler (`@ControllerAdvice`)
+- [x] Input validation responses — proper 400 responses with field errors
+- [x] Fix `open-in-view` warning in JPA config
+- [x] Remove hardcoded dialect from `application.yml`
+- [x] UTF-8 encoding fix for Turkish characters
+- [x] Multi-language UI (TR/EN)
+- [x] Room deletion (owner only)
+- [x] Swagger / OpenAPI documentation
 
 ---
 
-## 📋 Sprint 3 — Advanced Features
+## � Sprint 3 — Advanced Features (In Progress)
 
-- [ ] Typing indicator — broadcast `{username} is typing...` via presence channel
+- [x] Typing indicator — broadcast `{username} is typing...` via presence channel
 - [ ] Read receipts — track which messages a user has seen
 - [ ] Message editing — update content, set `edited: true`
 - [ ] File/image attachment support (store URL, serve via S3 or local)

@@ -9,13 +9,10 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; overflow: hidden; }
-
-    /* LEFT */
     #left { width: 260px; min-width: 260px; background: #16213e; display: flex; flex-direction: column; border-right: 1px solid #0f3460; }
     #left-header { padding: 14px 16px; color: #e94560; font-size: 16px; font-weight: bold; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
     #lang-btn { font-size: 11px; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
     #lang-btn:hover { background: #e94560; color: #fff; }
-
     #auth-box { padding: 12px; border-bottom: 1px solid #0f3460; }
     #auth-box input { width: 100%; padding: 7px 10px; margin-bottom: 6px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 13px; font-family: inherit; }
     #auth-box input:focus { outline: none; border-color: #e94560; }
@@ -24,53 +21,64 @@
     #btn-login { background: #e94560; color: #fff; }
     #btn-register { background: transparent; border: 1px solid #e94560!important; color: #e94560; }
     #auth-status { font-size: 11px; margin-top: 6px; min-height: 15px; color: #aaa; }
-
     #rooms-box { flex: 1; overflow-y: auto; padding: 10px 12px; }
-    #rooms-header { font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    #rooms-header { font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     #rooms-header span { cursor: pointer; color: #e94560; font-size: 14px; }
     .room-row { display: flex; align-items: center; padding: 8px 10px; background: #0f3460; border-radius: 5px; margin-bottom: 5px; cursor: pointer; font-size: 13px; gap: 6px; }
     .room-row:hover { background: #1a3a6e; }
     .room-row.active { background: #e94560; }
     .room-row .rname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .room-row .rbtn { font-size: 10px; background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 2px 7px; border-radius: 3px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-
+    .unread-badge { background: #e94560; color: #fff; font-size: 10px; font-weight: bold; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center; flex-shrink: 0; }
     #create-box { padding: 10px 12px; border-top: 1px solid #0f3460; }
     #create-box input { width: 100%; padding: 7px 10px; margin-bottom: 6px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 13px; font-family: inherit; }
     #create-box input:focus { outline: none; border-color: #e94560; }
+    .create-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .create-row select { flex: 1; padding: 7px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 13px; font-family: inherit; }
     #btn-create { width: 100%; padding: 7px; background: transparent; border: 1px solid #e94560; color: #e94560; border-radius: 5px; cursor: pointer; font-size: 13px; font-family: inherit; }
     #btn-create:hover { background: #e94560; color: #fff; }
-
-    /* RIGHT */
+    #dm-box { padding: 8px 12px; border-top: 1px solid #0f3460; }
+    #dm-box input { width: 100%; padding: 6px 10px; margin-bottom: 5px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 5px; font-size: 12px; font-family: inherit; }
+    #btn-dm { width: 100%; padding: 6px; background: transparent; border: 1px solid #4caf50; color: #4caf50; border-radius: 5px; cursor: pointer; font-size: 12px; font-family: inherit; }
+    #btn-dm:hover { background: #4caf50; color: #fff; }
     #right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     #chat-header { padding: 13px 18px; background: #16213e; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
     #room-title { color: #e94560; font-size: 15px; font-weight: bold; }
     #ws-badge { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: #3a1a1a; color: #f44336; }
     #ws-badge.on { background: #1a3a22; color: #4caf50; }
-
     #msg-list { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
-    .bubble { max-width: 65%; padding: 8px 13px; border-radius: 8px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+    .bubble { max-width: 65%; padding: 8px 13px; border-radius: 8px; font-size: 14px; line-height: 1.5; word-break: break-word; position: relative; }
     .bubble.in  { background: #16213e; border: 1px solid #0f3460; align-self: flex-start; }
     .bubble.out { background: #e94560; align-self: flex-end; }
-    .bubble .bmeta { font-size: 10px; color: #aaa; margin-bottom: 2px; }
+    .bubble .bmeta { font-size: 10px; color: #aaa; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
     .bubble.out .bmeta { color: rgba(255,255,255,0.6); }
+    .bubble .bactions { display: none; position: absolute; top: 4px; right: 6px; gap: 4px; }
+    .bubble.out:hover .bactions { display: flex; }
+    .bactions button { font-size: 10px; background: rgba(0,0,0,0.3); border: none; color: #fff; padding: 2px 5px; border-radius: 3px; cursor: pointer; }
+    .edited-tag { font-size: 9px; color: rgba(255,255,255,0.5); font-style: italic; }
+    .read-receipt { font-size: 9px; color: rgba(255,255,255,0.5); }
+    .file-attach { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 5px; margin-top: 4px; font-size: 12px; }
+    .file-attach a { color: #90caf9; text-decoration: none; }
+    .file-attach a:hover { text-decoration: underline; }
     #empty-hint { text-align: center; color: #444; font-size: 13px; margin-top: 60px; }
-
-    #input-row { padding: 11px 14px; background: #16213e; border-top: 1px solid #0f3460; display: flex; gap: 8px; }
-    #msg-input { flex: 1; padding: 9px 13px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    #input-row { padding: 11px 14px; background: #16213e; border-top: 1px solid #0f3460; display: flex; gap: 8px; align-items: flex-end; }
+    #input-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    #typing-indicator { display: none; font-size: 11px; color: #aaa; padding: 0 4px; font-style: italic; }
+    #msg-input { padding: 9px 13px; background: #0f3460; border: 1px solid #1a3a6e; color: #eee; border-radius: 6px; font-size: 14px; font-family: inherit; width: 100%; }
     #msg-input:focus { outline: none; border-color: #e94560; }
     #msg-input:disabled { opacity: 0.35; }
-    #btn-send { padding: 9px 20px; background: #e94560; border: none; color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit; white-space: nowrap; }
+    #attach-btn { padding: 9px 12px; background: #0f3460; border: 1px solid #1a3a6e; color: #aaa; border-radius: 6px; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+    #attach-btn:hover { border-color: #e94560; color: #e94560; }
+    #btn-send { padding: 9px 20px; background: #e94560; border: none; color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
     #btn-send:disabled { background: #444; cursor: not-allowed; }
-
-    #log-box { height: 100px; background: #0a0a1a; border-top: 1px solid #0f3460; padding: 6px 12px; overflow-y: auto; font-size: 11px; font-family: monospace; }
+    #attach-preview { display: none; font-size: 11px; color: #aaa; padding: 3px 4px; background: rgba(255,255,255,0.05); border-radius: 4px; }
+    #log-box { height: 80px; background: #0a0a1a; border-top: 1px solid #0f3460; padding: 6px 12px; overflow-y: auto; font-size: 11px; font-family: monospace; }
     .li { color: #4caf50; } .le { color: #f44336; } .lw { color: #ff9800; }
   </style>
 </head>
 <body>
-
 <div id="left">
   <div id="left-header">⚡ NexusChat <button id="lang-btn" onclick="toggleLang()">EN</button></div>
-
   <div id="auth-box">
     <input id="inp-user" value="testuser">
     <input id="inp-pass" type="password" value="123456">
@@ -80,7 +88,6 @@
     </div>
     <div id="auth-status"></div>
   </div>
-
   <div id="rooms-box">
     <div id="rooms-header">
       <span id="lbl-rooms">ODALAR</span>
@@ -88,13 +95,21 @@
     </div>
     <div id="room-list"></div>
   </div>
-
   <div id="create-box">
-    <input id="inp-room-name">
+    <input id="inp-room-name" placeholder="Oda adı...">
+    <div class="create-row">
+      <select id="sel-room-type">
+        <option value="PUBLIC">PUBLIC</option>
+        <option value="PRIVATE">PRIVATE</option>
+      </select>
+    </div>
     <button id="btn-create" onclick="createRoom()">+ Oda Oluştur</button>
   </div>
+  <div id="dm-box">
+    <input id="inp-dm-user" placeholder="DM: kullanıcı adı...">
+    <button id="btn-dm" onclick="startDm()">💬 DM Başlat</button>
+  </div>
 </div>
-
 <div id="right">
   <div id="chat-header">
     <span id="room-title">—</span>
@@ -102,17 +117,19 @@
   </div>
   <div id="msg-list"><div id="empty-hint">—</div></div>
   <div id="input-row">
-    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-      <div id="typing-indicator" style="display:none;font-size:11px;color:#aaa;padding:0 4px;font-style:italic"></div>
-      <input id="msg-input" disabled
-        onkeydown="if(event.key==='Enter')sendMsg()"
+    <div id="input-col">
+      <div id="typing-indicator"></div>
+      <div id="attach-preview"></div>
+      <input id="msg-input" disabled placeholder="Mesaj yaz..."
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMsg()"
         oninput="onMsgInput()">
     </div>
+    <button id="attach-btn" title="Dosya ekle" onclick="document.getElementById('file-input').click()">📎</button>
+    <input id="file-input" type="file" style="display:none" onchange="onFileSelected(event)">
     <button id="btn-send" disabled onclick="sendMsg()">Gönder</button>
   </div>
   <div id="log-box"></div>
 </div>
-
 <script>
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const LANG = {
@@ -133,8 +150,12 @@ const LANG = {
     logSub:'Oda {id} abone olundu',
     errPass:'Şifre en az 6 karakter olmalı',
     errLogin:'Giriş başarısız', errRegister:'Kayıt başarısız',
+    editBtn:'✏', deleteBtn:'🗑', edited:'(düzenlendi)',
+    dmPh:'DM: kullanıcı adı...', dmStart:'💬 DM Başlat',
+    attachPh:'Dosya seçildi: {n}', roomTypePh:'Oda tipi',
   },
-  en: {    userPh:'Username', passPh:'Password (min 6 chars)',
+  en: {
+    userPh:'Username', passPh:'Password (min 6 chars)',
     login:'Login', register:'Register',
     rooms:'ROOMS', roomPh:'Room name...', createRoom:'+ Create Room',
     join:'Join', send:'Send',
@@ -150,16 +171,17 @@ const LANG = {
     logSub:'Subscribed room {id}',
     errPass:'Password must be at least 6 characters',
     errLogin:'Login failed', errRegister:'Register failed',
+    editBtn:'✏', deleteBtn:'🗑', edited:'(edited)',
+    dmPh:'DM: username...', dmStart:'💬 Start DM',
+    attachPh:'File selected: {n}', roomTypePh:'Room type',
   }
 };
-
 let curLang = 'tr';
 const T = (k, v={}) => {
   let s = LANG[curLang][k] || k;
   Object.entries(v).forEach(([a,b]) => s = s.replace('{'+a+'}', b));
   return s;
 };
-
 function applyLang() {
   document.documentElement.lang = curLang;
   document.getElementById('inp-user').placeholder   = T('userPh');
@@ -172,24 +194,26 @@ function applyLang() {
   document.getElementById('btn-send').textContent   = T('send');
   document.getElementById('msg-input').placeholder  = T('msgPh');
   document.getElementById('lang-btn').textContent   = T('langSwitch');
+  document.getElementById('inp-dm-user').placeholder = T('dmPh');
+  document.getElementById('btn-dm').textContent     = T('dmStart');
   const hint = document.getElementById('empty-hint');
   if (hint) hint.textContent = T('hint');
   const wb = document.getElementById('ws-badge');
   if (wb) wb.textContent = wb.classList.contains('on') ? T('wsOn') : T('wsOff');
   if (!curRoomId) document.getElementById('room-title').textContent = '—';
 }
-
 function toggleLang() {
   curLang = curLang === 'tr' ? 'en' : 'tr';
   applyLang();
-  // Oda listesini yeniden render et (sadece mevcut veriyle, yeni istek atmadan)
-  const roomListEl = document.getElementById('room-list');
-  if (roomListEl && token) loadRooms();
+  if (token) loadRooms();
 }
 
 // ── state ─────────────────────────────────────────────────────────────────────
-let token = null, curUser = null, stomp = null, curRoomId = null, curSub = null, curTypingSub = null;
+let token = null, curUser = null, stomp = null, curRoomId = null;
+let curSub = null, curTypingSub = null, curReadSub = null;
 let typingTimer = null, typingUsers = {};
+let unreadCounts = {}; // roomId -> count
+let pendingFile = null; // { url, name, type }
 
 // ── log ───────────────────────────────────────────────────────────────────────
 function log(msg, t='i') {
@@ -207,33 +231,28 @@ async function doLogin() {
   const p = document.getElementById('inp-pass').value;
   try {
     const r = await fetch('/api/auth/login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username:u, password:p})
     });
     if (!r.ok) { log(T('errLogin')+' ('+r.status+')', 'e'); return; }
     onAuth(await r.json());
   } catch(e) { log(T('errLogin')+': '+e.message, 'e'); }
 }
-
 async function doRegister() {
   const u = document.getElementById('inp-user').value.trim();
   const p = document.getElementById('inp-pass').value;
   if (p.length < 6) { log(T('errPass'), 'w'); return; }
   try {
     const r = await fetch('/api/auth/register', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({username:u, email:u+'@nexus.chat', password:p})
     });
     if (!r.ok) { log(T('errRegister')+' ('+r.status+')', 'e'); return; }
     onAuth(await r.json());
   } catch(e) { log(T('errRegister')+': '+e.message, 'e'); }
 }
-
 function onAuth(data) {
-  token = data.token;
-  curUser = data.username;
+  token = data.token; curUser = data.username;
   document.getElementById('auth-status').innerHTML =
     '<span style="color:#4caf50">'+T('authOk',{u:data.username})+'</span>';
   log(T('logLogin',{u:data.username}));
@@ -247,8 +266,7 @@ function connectWS() {
   const sock = new SockJS('/ws');
   stomp = Stomp.over(sock);
   stomp.debug = null;
-  stomp.connect(
-    {Authorization:'Bearer '+token},
+  stomp.connect({Authorization:'Bearer '+token},
     function() {
       const b = document.getElementById('ws-badge');
       b.textContent = T('wsOn'); b.className = 'on';
@@ -262,24 +280,32 @@ function connectWS() {
     }
   );
 }
-
 function subRoom(id) {
   if (!stomp || !stomp.connected) return;
   if (curSub) { curSub.unsubscribe(); curSub = null; }
   if (curTypingSub) { curTypingSub.unsubscribe(); curTypingSub = null; }
+  if (curReadSub) { curReadSub.unsubscribe(); curReadSub = null; }
 
   curSub = stomp.subscribe('/topic/room.'+id, frame => {
-    addBubble(JSON.parse(frame.body));
-  });
-
-  // Typing indicator subscription
-  curTypingSub = stomp.subscribe('/topic/room.'+id+'.typing', frame => {
-    const data = JSON.parse(frame.body);
-    if (data.username !== curUser) {
-      showTyping(data.username, data.typing);
+    const msg = JSON.parse(frame.body);
+    // Could be a new message or an edit (has id)
+    const existing = document.getElementById('msg-'+msg.id);
+    if (existing) {
+      updateBubble(existing, msg);
+    } else {
+      addBubble(msg);
+      // Auto mark as read if this room is open
+      if (curRoomId === id) sendReadReceipt(id, msg.id);
     }
   });
-
+  curTypingSub = stomp.subscribe('/topic/room.'+id+'.typing', frame => {
+    const data = JSON.parse(frame.body);
+    if (data.username !== curUser) showTyping(data.username, data.typing);
+  });
+  curReadSub = stomp.subscribe('/topic/room.'+id+'.read', frame => {
+    const data = JSON.parse(frame.body);
+    updateReadReceipt(data.messageId, data.username);
+  });
   log(T('logSub',{id}));
 }
 
@@ -291,10 +317,21 @@ async function loadRooms() {
     if (!r.ok) { log('Rooms error: '+r.status, 'e'); return; }
     const data = await r.json();
     if (!Array.isArray(data)) { log('Rooms error: unexpected response', 'e'); return; }
+    await loadUnreadCounts();
     renderRooms(data);
   } catch(e) { log('Rooms error: '+e.message, 'e'); }
 }
-
+async function loadUnreadCounts() {
+  if (!token) return;
+  try {
+    const r = await fetch('/api/messages/unread', {headers:{Authorization:'Bearer '+token}});
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!Array.isArray(data)) return;
+    unreadCounts = {};
+    data.forEach(u => { unreadCounts[u.roomId] = u.unreadCount; });
+  } catch(e) { /* non-critical */ }
+}
 function renderRooms(list) {
   const el = document.getElementById('room-list');
   el.innerHTML = '';
@@ -311,7 +348,8 @@ function renderRooms(list) {
 
     const name = document.createElement('span');
     name.className = 'rname';
-    name.textContent = '# '+r.name;
+    const prefix = r.type === 'DIRECT' ? '💬 ' : '# ';
+    name.textContent = prefix + r.name;
     name.onclick = () => openRoom(r.id, r.name);
 
     const btn = document.createElement('button');
@@ -320,10 +358,19 @@ function renderRooms(list) {
     btn.onclick = e => { e.stopPropagation(); joinThenOpen(r.id, r.name); };
 
     row.appendChild(name);
+
+    // Unread badge
+    const cnt = unreadCounts[r.id];
+    if (cnt && cnt > 0 && r.id !== curRoomId) {
+      const badge = document.createElement('span');
+      badge.className = 'unread-badge';
+      badge.textContent = cnt > 99 ? '99+' : cnt;
+      row.appendChild(badge);
+    }
+
     row.appendChild(btn);
 
-    // Sil butonu — sadece oda sahibine göster
-    if (curUser && r.createdByUsername === curUser) {
+    if (curUser && r.createdByUsername === curUser && r.type !== 'DIRECT') {
       const delBtn = document.createElement('button');
       delBtn.className = 'rbtn';
       delBtn.textContent = '🗑';
@@ -331,90 +378,91 @@ function renderRooms(list) {
       delBtn.onclick = e => { e.stopPropagation(); confirmDelete(r.id, r.name); };
       row.appendChild(delBtn);
     }
-
     el.appendChild(row);
   });
 }
-
 async function joinRoom(id) {
   try {
     const r = await fetch('/api/rooms/'+id+'/join', {
       method:'POST', headers:{Authorization:'Bearer '+token}
     });
     if (r.ok) log(T('logJoin',{id}));
-  } catch(e) { /* already member — ignore */ }
+  } catch(e) { /* already member */ }
 }
-
-async function joinThenOpen(id, name) {
-  await joinRoom(id);
-  openRoom(id, name);
-}
-
+async function joinThenOpen(id, name) { await joinRoom(id); openRoom(id, name); }
 async function confirmDelete(id, name) {
-  const msg = curLang === 'tr'
-    ? `"${name}" odasını silmek istediğinize emin misiniz?`
-    : `Are you sure you want to delete "${name}"?`;
+  const msg = curLang==='tr' ? `"${name}" odasını silmek istediğinize emin misiniz?`
+                              : `Are you sure you want to delete "${name}"?`;
   if (!confirm(msg)) return;
   await deleteRoom(id, name);
 }
-
 async function deleteRoom(id, name) {
   try {
-    const r = await fetch('/api/rooms/'+id, {
-      method:'DELETE', headers:{Authorization:'Bearer '+token}
-    });
-    if (r.ok || r.status === 204) {
-      log(curLang === 'tr' ? `Oda silindi: #${name}` : `Room deleted: #${name}`);
-      // Eğer silinen oda açıksa sıfırla
-      if (curRoomId === id) {
-        curRoomId = null;
-        if (curSub) { curSub.unsubscribe(); curSub = null; }
-        document.getElementById('room-title').textContent = '—';
-        document.getElementById('msg-list').innerHTML = '<div id="empty-hint">'+T('hint')+'</div>';
-        document.getElementById('msg-input').disabled = true;
-        document.getElementById('btn-send').disabled = true;
+    const r = await fetch('/api/rooms/'+id, {method:'DELETE', headers:{Authorization:'Bearer '+token}});
+    if (r.ok || r.status===204) {
+      log(curLang==='tr' ? `Oda silindi: #${name}` : `Room deleted: #${name}`);
+      if (curRoomId===id) {
+        curRoomId=null;
+        if (curSub) { curSub.unsubscribe(); curSub=null; }
+        document.getElementById('room-title').textContent='—';
+        document.getElementById('msg-list').innerHTML='<div id="empty-hint">'+T('hint')+'</div>';
+        document.getElementById('msg-input').disabled=true;
+        document.getElementById('btn-send').disabled=true;
       }
       loadRooms();
-    } else {
-      const txt = await r.text();
-      log((curLang === 'tr' ? 'Silinemedi: ' : 'Delete failed: ') + txt, 'e');
-    }
-  } catch(e) { log('Error: '+e.message, 'e'); }
+    } else { const txt=await r.text(); log('Delete failed: '+txt,'e'); }
+  } catch(e) { log('Error: '+e.message,'e'); }
 }
-
 async function openRoom(id, name) {
   curRoomId = id;
   document.getElementById('room-title').textContent = '# '+name;
   document.getElementById('msg-input').disabled = false;
   document.getElementById('btn-send').disabled = false;
   document.getElementById('msg-list').innerHTML = '';
-
-  // highlight
   document.querySelectorAll('.room-row').forEach(e => e.classList.remove('active'));
   const row = document.getElementById('room-'+id);
   if (row) row.classList.add('active');
-
+  // Clear unread badge for this room
+  const badge = row && row.querySelector('.unread-badge');
+  if (badge) badge.remove();
   await loadHistory(id);
   subRoom(id);
 }
-
 async function createRoom() {
   if (!token) return;
   const name = document.getElementById('inp-room-name').value.trim();
+  const type = document.getElementById('sel-room-type').value;
   if (!name) return;
   try {
     const r = await fetch('/api/rooms', {
       method:'POST',
       headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
-      body: JSON.stringify({name, type:'PUBLIC'})
+      body: JSON.stringify({name, type})
     });
-    if (!r.ok) { log('Create room error '+r.status, 'e'); return; }
+    if (!r.ok) { log('Create room error '+r.status,'e'); return; }
     const room = await r.json();
-    document.getElementById('inp-room-name').value = '';
+    document.getElementById('inp-room-name').value='';
     log(T('logCreated',{n:room.name}));
     await loadRooms();
     openRoom(room.id, room.name);
-  } catch(e) { log('Error: '+e.message, 'e'); }
+  } catch(e) { log('Error: '+e.message,'e'); }
+}
+async function startDm() {
+  if (!token) return;
+  const target = document.getElementById('inp-dm-user').value.trim();
+  if (!target) return;
+  try {
+    const r = await fetch('/api/rooms/dm', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({targetUsername: target})
+    });
+    if (!r.ok) { log('DM error '+r.status,'e'); return; }
+    const room = await r.json();
+    document.getElementById('inp-dm-user').value='';
+    await loadRooms();
+    openRoom(room.id, room.name);
+  } catch(e) { log('DM error: '+e.message,'e'); }
 }
 
 // ── messages ──────────────────────────────────────────────────────────────────
@@ -423,58 +471,133 @@ async function loadHistory(id) {
     const r = await fetch('/api/messages/room/'+id+'?page=0&size=50', {
       headers:{Authorization:'Bearer '+token}
     });
-    if (!r.ok) { log('History error: '+r.status, 'e'); return; }
+    if (!r.ok) { log('History error: '+r.status,'e'); return; }
     const msgs = await r.json();
-    if (!Array.isArray(msgs)) { log('History error: unexpected response', 'e'); return; }
+    if (!Array.isArray(msgs)) { log('History error: unexpected response','e'); return; }
     msgs.reverse().forEach(m => addBubble(m, true));
     log(T('logHistory',{n:msgs.length}));
-  } catch(e) { log('History error: '+e.message, 'e'); }
+    // Mark last message as read
+    if (msgs.length > 0) {
+      const lastId = msgs.reduce((max, m) => m.id > max ? m.id : max, 0);
+      sendReadReceipt(id, lastId);
+    }
+  } catch(e) { log('History error: '+e.message,'e'); }
 }
-
 function sendMsg() {
   const inp = document.getElementById('msg-input');
   const txt = inp.value.trim();
-  if (!txt || !stomp || !stomp.connected || !curRoomId) return;
-  stomp.send('/app/chat.send', {}, JSON.stringify({roomId:curRoomId, content:txt, type:'TEXT'}));
-  // Yazma durumunu kapat
+  if (!stomp || !stomp.connected || !curRoomId) return;
+  if (!txt && !pendingFile) return;
+
+  if (pendingFile) {
+    stomp.send('/app/chat.send', {}, JSON.stringify({
+      roomId: curRoomId,
+      content: txt || '',
+      type: pendingFile.type,
+      fileUrl: pendingFile.url,
+      fileName: pendingFile.name
+    }));
+    clearAttachment();
+  } else {
+    stomp.send('/app/chat.send', {}, JSON.stringify({roomId:curRoomId, content:txt, type:'TEXT'}));
+  }
   sendTyping(false);
   inp.value = '';
   log(T('logSent'));
 }
-
-// Typing indicator gönder
 function sendTyping(isTyping) {
   if (!stomp || !stomp.connected || !curRoomId) return;
-  stomp.send('/app/chat.typing', {}, JSON.stringify({roomId: curRoomId, typing: isTyping}));
+  stomp.send('/app/chat.typing', {}, JSON.stringify({roomId:curRoomId, typing:isTyping}));
 }
-
-// Input değişince typing gönder, 2sn sonra otomatik kapat
 function onMsgInput() {
   if (!curRoomId) return;
   sendTyping(true);
   clearTimeout(typingTimer);
   typingTimer = setTimeout(() => sendTyping(false), 2000);
 }
-// Typing göster/gizle
+function sendReadReceipt(roomId, messageId) {
+  if (!stomp || !stomp.connected) return;
+  stomp.send('/app/chat.read', {}, JSON.stringify({roomId, messageId}));
+}
 function showTyping(username, isTyping) {
-  if (isTyping) {
-    typingUsers[username] = true;
-  } else {
-    delete typingUsers[username];
-  }
+  if (isTyping) typingUsers[username] = true;
+  else delete typingUsers[username];
   const names = Object.keys(typingUsers);
   const el = document.getElementById('typing-indicator');
   if (!el) return;
-  if (names.length === 0) {
-    el.textContent = '';
-    el.style.display = 'none';
-  } else {
-    const suffix = curLang === 'tr' ? ' yazıyor...' : ' is typing...';
-    el.textContent = names.join(', ') + suffix;
+  if (!names.length) { el.textContent=''; el.style.display='none'; }
+  else {
+    const suffix = curLang==='tr' ? ' yazıyor...' : ' is typing...';
+    el.textContent = names.join(', ')+suffix;
     el.style.display = 'block';
   }
 }
+function updateReadReceipt(messageId, username) {
+  if (username === curUser) return;
+  const bubble = document.getElementById('msg-'+messageId);
+  if (!bubble) return;
+  let rr = bubble.querySelector('.read-receipt');
+  if (!rr) {
+    rr = document.createElement('span');
+    rr.className = 'read-receipt';
+    const meta = bubble.querySelector('.bmeta');
+    if (meta) meta.appendChild(rr);
+  }
+  rr.textContent = ' ✓✓';
+}
 
+// ── file attachment ───────────────────────────────────────────────────────────
+function onFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  // In a real app, upload to S3/server and get back a URL.
+  // Here we use a local object URL as a demo placeholder.
+  const url = URL.createObjectURL(file);
+  const isImage = file.type.startsWith('image/');
+  pendingFile = { url, name: file.name, type: isImage ? 'IMAGE' : 'FILE' };
+  const preview = document.getElementById('attach-preview');
+  preview.textContent = T('attachPh', {n: file.name});
+  preview.style.display = 'block';
+  // Reset file input so same file can be re-selected
+  event.target.value = '';
+}
+function clearAttachment() {
+  pendingFile = null;
+  const preview = document.getElementById('attach-preview');
+  preview.textContent = '';
+  preview.style.display = 'none';
+}
+
+// ── edit message ──────────────────────────────────────────────────────────────
+function startEdit(messageId, currentContent) {
+  const inp = document.getElementById('msg-input');
+  inp.value = currentContent;
+  inp.focus();
+  inp.dataset.editingId = messageId;
+  inp.onkeydown = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const newContent = inp.value.trim();
+      if (!newContent) return;
+      stomp.send('/app/chat.edit', {}, JSON.stringify({messageId, content: newContent}));
+      inp.value = '';
+      delete inp.dataset.editingId;
+      inp.onkeydown = function(e) { if(e.key==='Enter'&&!e.shiftKey) sendMsg(); };
+    }
+    if (e.key === 'Escape') {
+      inp.value = '';
+      delete inp.dataset.editingId;
+      inp.onkeydown = function(e) { if(e.key==='Enter'&&!e.shiftKey) sendMsg(); };
+    }
+  };
+}
+async function deleteMsg(messageId) {
+  try {
+    await fetch('/api/messages/'+messageId, {method:'DELETE', headers:{Authorization:'Bearer '+token}});
+  } catch(e) { log('Delete msg error: '+e.message,'e'); }
+}
+
+// ── bubble rendering ──────────────────────────────────────────────────────────
 function addBubble(msg) {
   const list = document.getElementById('msg-list');
   const hint = document.getElementById('empty-hint');
@@ -482,23 +605,87 @@ function addBubble(msg) {
 
   const isOwn = msg.senderUsername === curUser;
   const time = new Date(msg.createdAt).toLocaleTimeString(
-    curLang === 'tr' ? 'tr-TR' : 'en-US', {hour:'2-digit', minute:'2-digit'}
+    curLang==='tr' ? 'tr-TR' : 'en-US', {hour:'2-digit', minute:'2-digit'}
   );
 
   const div = document.createElement('div');
   div.className = 'bubble '+(isOwn ? 'out' : 'in');
+  div.id = 'msg-'+msg.id;
 
   const meta = document.createElement('div');
   meta.className = 'bmeta';
-  meta.textContent = (isOwn ? '' : (msg.senderDisplayName||msg.senderUsername)+' · ')+time;
-
-  const body = document.createElement('div');
-  body.textContent = msg.content;   // textContent = UTF-8 güvenli, XSS yok
-
+  const sender = document.createElement('span');
+  sender.textContent = (isOwn ? '' : (msg.senderDisplayName||msg.senderUsername)+' · ')+time;
+  meta.appendChild(sender);
+  if (msg.edited) {
+    const et = document.createElement('span');
+    et.className = 'edited-tag';
+    et.textContent = T('edited');
+    meta.appendChild(et);
+  }
   div.appendChild(meta);
+
+  // Message body
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+  body.textContent = msg.content;
   div.appendChild(body);
+
+  // File/image attachment
+  if (msg.fileUrl) {
+    const attach = document.createElement('div');
+    attach.className = 'file-attach';
+    if (msg.type === 'IMAGE') {
+      const img = document.createElement('img');
+      img.src = msg.fileUrl;
+      img.alt = msg.fileName || 'image';
+      img.style.cssText = 'max-width:200px;max-height:150px;border-radius:4px;display:block;margin-top:4px;';
+      div.appendChild(img);
+    } else {
+      attach.innerHTML = '📎 ';
+      const a = document.createElement('a');
+      a.href = msg.fileUrl;
+      a.target = '_blank';
+      a.textContent = msg.fileName || 'file';
+      attach.appendChild(a);
+      div.appendChild(attach);
+    }
+  }
+
+  // Edit/delete actions (own messages only)
+  if (isOwn && msg.content !== '[Message deleted]') {
+    const actions = document.createElement('div');
+    actions.className = 'bactions';
+    const editBtn = document.createElement('button');
+    editBtn.textContent = T('editBtn');
+    editBtn.title = 'Edit';
+    editBtn.onclick = () => startEdit(msg.id, msg.content);
+    const delBtn = document.createElement('button');
+    delBtn.textContent = T('deleteBtn');
+    delBtn.title = 'Delete';
+    delBtn.onclick = () => deleteMsg(msg.id);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    div.appendChild(actions);
+  }
+
   list.appendChild(div);
   list.scrollTop = list.scrollHeight;
+}
+
+function updateBubble(el, msg) {
+  const body = el.querySelector('.msg-body');
+  if (body) body.textContent = msg.content;
+  const meta = el.querySelector('.bmeta');
+  if (meta && msg.edited) {
+    let et = meta.querySelector('.edited-tag');
+    if (!et) {
+      et = document.createElement('span');
+      et.className = 'edited-tag';
+      meta.appendChild(et);
+    }
+    et.textContent = T('edited');
+  }
 }
 
 // ── init ──────────────────────────────────────────────────────────────────────

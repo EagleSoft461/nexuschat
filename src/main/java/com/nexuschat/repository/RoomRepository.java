@@ -25,4 +25,17 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     Optional<Room> findByIdWithCreator(@Param("id") Long id);
 
     boolean existsByName(String name);
+
+    // Find existing DM room between two users
+    @Query("""
+        SELECT DISTINCT r FROM Room r
+        JOIN FETCH r.createdBy
+        LEFT JOIN FETCH r.members
+        WHERE r.type = 'DIRECT'
+        AND EXISTS (SELECT rm1 FROM RoomMember rm1 WHERE rm1.room = r AND rm1.user = :user1)
+        AND EXISTS (SELECT rm2 FROM RoomMember rm2 WHERE rm2.room = r AND rm2.user = :user2)
+        """)
+    java.util.Optional<Room> findDirectMessageRoom(
+            @Param("user1") com.nexuschat.model.User user1,
+            @Param("user2") com.nexuschat.model.User user2);
 }

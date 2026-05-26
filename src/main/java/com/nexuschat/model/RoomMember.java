@@ -33,6 +33,10 @@ public class RoomMember {
     @Builder.Default
     private MemberRole role = MemberRole.MEMBER;
 
+    // Tracks the last message this user has read in this room (for unread count)
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;

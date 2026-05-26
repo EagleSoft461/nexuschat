@@ -1,6 +1,8 @@
 package com.nexuschat.controller;
 
+import com.nexuschat.dto.request.CreateDmRequest;
 import com.nexuschat.dto.request.CreateRoomRequest;
+import com.nexuschat.dto.request.InviteUserRequest;
 import com.nexuschat.dto.response.RoomResponse;
 import com.nexuschat.service.RoomService;
 import jakarta.validation.Valid;
@@ -23,8 +25,7 @@ public class RoomController {
     public ResponseEntity<RoomResponse> createRoom(
             @Valid @RequestBody CreateRoomRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        RoomResponse response = roomService.createRoom(request, userDetails.getUsername());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(roomService.createRoom(request, userDetails.getUsername()));
     }
 
     @GetMapping
@@ -59,11 +60,30 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
+    /** Invite a user to a PRIVATE room (OWNER/ADMIN only) */
+    @PostMapping("/{roomId}/invite")
+    public ResponseEntity<Void> inviteUser(
+            @PathVariable Long roomId,
+            @Valid @RequestBody InviteUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        roomService.inviteUser(roomId, userDetails.getUsername(), request.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{roomId}")
     public ResponseEntity<Void> deleteRoom(
             @PathVariable Long roomId,
             @AuthenticationPrincipal UserDetails userDetails) {
         roomService.deleteRoom(roomId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    /** Create or retrieve a Direct Message room with another user */
+    @PostMapping("/dm")
+    public ResponseEntity<RoomResponse> createOrGetDm(
+            @Valid @RequestBody CreateDmRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                roomService.createOrGetDm(userDetails.getUsername(), request.getTargetUsername()));
     }
 }

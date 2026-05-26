@@ -35,6 +35,13 @@ public class Message {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    // For IMAGE / FILE messages
+    @Column(name = "file_url")
+    private String fileUrl;
+
+    @Column(name = "file_name", length = 255)
+    private String fileName;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean edited = false;
