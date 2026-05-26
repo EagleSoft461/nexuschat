@@ -26,7 +26,6 @@ This document tracks the development progress and future plans for NexusChat.
 - [x] Error handling — global exception handler (`@ControllerAdvice`)
 - [x] Input validation responses — proper 400 responses with field errors
 - [x] Fix `open-in-view` warning in JPA config
-- [x] Remove hardcoded dialect from `application.yml`
 - [x] UTF-8 encoding fix for Turkish characters
 - [x] Multi-language UI (TR/EN)
 - [x] Room deletion (owner only)
@@ -34,19 +33,27 @@ This document tracks the development progress and future plans for NexusChat.
 
 ---
 
-## � Sprint 3 — Advanced Features (In Progress)
+## ✅ Sprint 3 — Advanced Features (Completed) — v1.0.0
 
 - [x] Typing indicator — broadcast `{username} is typing...` via presence channel
-- [ ] Read receipts — track which messages a user has seen
-- [ ] Message editing — update content, set `edited: true`
-- [ ] File/image attachment support (store URL, serve via S3 or local)
-- [ ] Private rooms — invite-only with room access control
-- [ ] Direct messages (DM) — 1:1 private chat between users
-- [ ] Unread message count per room
+- [x] Read receipts — track which messages a user has seen (`lastReadMessageId` per member)
+- [x] Message editing — `PATCH /api/messages/{id}`, sets `edited: true`, broadcasts via Redis
+- [x] File/image attachment support — `fileUrl` + `fileName` fields on `Message`, sent via WebSocket
+- [x] Private rooms — invite-only via `POST /api/rooms/{id}/invite` (OWNER/ADMIN only)
+- [x] Direct messages (DM) — `POST /api/rooms/dm`, idempotent (returns existing DM if present)
+- [x] Unread message count — per-room `GET /api/messages/room/{id}/unread` and bulk `GET /api/messages/unread`
+- [x] UI — unread badges on room list
+- [x] UI — edit/delete buttons on own messages (hover)
+- [x] UI — file attachment picker with preview
+- [x] UI — DM start panel
+- [x] UI — room type selector (PUBLIC / PRIVATE) on create
+- [x] UI — read receipt tick marks (✓✓) on messages
+- [x] UI — room list merges public + user rooms (deduplication fix)
+- [x] Bug fixes — LazyInitializationException, docker-compose logging indent, JWT charset, SCAN vs KEYS
 
 ---
 
-## 📋 Sprint 4 — Scaling & Production
+## 📋 Sprint 4 — Scaling & Production (Planned)
 
 - [ ] Replace simple STOMP broker with RabbitMQ (full message broker)
 - [ ] Rate limiting — prevent message spam per user
@@ -70,20 +77,17 @@ This document tracks the development progress and future plans for NexusChat.
 
 ---
 
-## 🐛 Known Issues
-
-| Issue | Priority | Status |
-|---|---|---|
-| `open-in-view` JPA warning | Low | Open |
-| PostgreSQL dialect explicitly set (unnecessary) | Low | Open |
-| No global exception handler | Medium | Planned Sprint 2 |
-| WebSocket errors not returned to client | Medium | Planned Sprint 2 |
-
----
-
-## 📌 Tech Debt
+##  Tech Debt
 
 - Add unit tests for `AuthService`, `MessageService`, `RoomService`
 - Add integration tests for WebSocket flow
 - Extract magic strings (channel prefixes, topic paths) to constants
 - Add `@PreAuthorize` role checks on sensitive endpoints
+
+---
+
+## 📦 Releases
+
+| Version | Date | Description |
+|---|---|---|
+| v1.0.0 | 2026-05-26 | First stable release — Sprint 1-3 complete. Full real-time chat with auth, rooms, DM, read receipts, message editing, file attachments, presence, unread counts. |
