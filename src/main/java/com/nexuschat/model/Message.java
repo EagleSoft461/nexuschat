@@ -42,6 +42,13 @@ public class Message {
     @Column(name = "file_name", length = 255)
     private String fileName;
 
+    // Users who hid this message for themselves (local delete)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "message_hidden_by", joinColumns = @JoinColumn(name = "message_id"))
+    @Column(name = "username", length = 50)
+    @Builder.Default
+    private java.util.Set<String> hiddenBy = new java.util.HashSet<>();
+
     @Column(nullable = false)
     @Builder.Default
     private boolean edited = false;

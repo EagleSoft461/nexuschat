@@ -40,7 +40,8 @@ server:
 # Must be at least 256 bits (32 characters). Use environment variable JWT_SECRET in production.
 jwt:
   secret: ${JWT_SECRET:nexuschat-super-secret-key-change-in-production-must-be-at-least-256-bits}
-  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+  expiration: ${JWT_EXPIRATION:86400000}          # 24 hours in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
 
 logging:
   level:
@@ -71,7 +72,3 @@ rate-limit:
   auth:
     capacity: 10
     refill-per-minute: 10
-
-# Refresh token
-jwt:
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in ms

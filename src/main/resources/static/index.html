@@ -52,9 +52,22 @@
     .bubble.out { background: #e94560; align-self: flex-end; }
     .bubble .bmeta { font-size: 10px; color: #aaa; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
     .bubble.out .bmeta { color: rgba(255,255,255,0.6); }
-    .bubble .bactions { display: none; position: absolute; top: 4px; right: 6px; gap: 4px; }
-    .bubble.out:hover .bactions { display: flex; }
-    .bactions button { font-size: 10px; background: rgba(0,0,0,0.3); border: none; color: #fff; padding: 2px 5px; border-radius: 3px; cursor: pointer; }
+    .bubble .bactions { display: flex; gap: 4px; margin-top: 5px; }
+    .bactions button { font-size: 11px; background: rgba(0,0,0,0.25); border: none; color: #fff; padding: 2px 8px; border-radius: 3px; cursor: pointer; opacity: 0.7; }
+    .bactions button:hover { opacity: 1; background: rgba(0,0,0,0.5); }
+    /* Inline edit */
+    .bubble .inline-edit { display: none; margin-top: 6px; }
+    .bubble .inline-edit.active { display: flex; gap: 5px; }
+    .bubble .inline-edit textarea { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 4px 8px; font-size: 13px; font-family: inherit; resize: none; min-height: 36px; }
+    .bubble .inline-edit textarea:focus { outline: none; border-color: rgba(255,255,255,0.7); }
+    .bubble .inline-edit .ie-save { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .bubble .inline-edit .ie-cancel { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    /* Delete menu */
+    .del-menu { display: none; position: absolute; bottom: 100%; right: 0; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 6px; padding: 4px; z-index: 10; min-width: 160px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .del-menu.open { display: block; }
+    .del-menu button { display: block; width: 100%; text-align: left; background: none; border: none; color: #eee; padding: 7px 12px; font-size: 12px; cursor: pointer; border-radius: 4px; }
+    .del-menu button:hover { background: #0f3460; }
+    .del-menu button.danger { color: #f44336; }
     .edited-tag { font-size: 9px; color: rgba(255,255,255,0.5); font-style: italic; }
     .read-receipt { font-size: 9px; color: rgba(255,255,255,0.5); }
     .file-attach { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 5px; margin-top: 4px; font-size: 12px; }
@@ -580,32 +593,97 @@ function clearAttachment() {
 }
 
 // ── edit message ──────────────────────────────────────────────────────────────
-function startEdit(messageId, currentContent) {
-  const inp = document.getElementById('msg-input');
-  inp.value = currentContent;
-  inp.focus();
-  inp.dataset.editingId = messageId;
-  inp.onkeydown = function(e) {
+function startEdit(messageId, currentContent, bubbleEl) {
+  // Close any other open edit
+  document.querySelectorAll('.inline-edit.active').forEach(el => {
+    el.classList.remove('active');
+    el.querySelector('textarea').value = '';
+  });
+
+  const editDiv = bubbleEl.querySelector('.inline-edit');
+  const textarea = editDiv.querySelector('textarea');
+  textarea.value = currentContent;
+  editDiv.classList.add('active');
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+  // Save on Enter (without Shift), cancel on Escape
+  textarea.onkeydown = function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const newContent = inp.value.trim();
-      if (!newContent) return;
-      stomp.send('/app/chat.edit', {}, JSON.stringify({messageId, content: newContent}));
-      inp.value = '';
-      delete inp.dataset.editingId;
-      inp.onkeydown = function(e) { if(e.key==='Enter'&&!e.shiftKey) sendMsg(); };
+      saveEdit(messageId, textarea.value.trim(), editDiv);
     }
     if (e.key === 'Escape') {
-      inp.value = '';
-      delete inp.dataset.editingId;
-      inp.onkeydown = function(e) { if(e.key==='Enter'&&!e.shiftKey) sendMsg(); };
+      editDiv.classList.remove('active');
     }
   };
+  editDiv.querySelector('.ie-save').onclick = () => saveEdit(messageId, textarea.value.trim(), editDiv);
+  editDiv.querySelector('.ie-cancel').onclick = () => editDiv.classList.remove('active');
 }
-async function deleteMsg(messageId) {
+
+async function saveEdit(messageId, newContent, editDiv) {
+  if (!newContent) return;
   try {
-    await fetch('/api/messages/'+messageId, {method:'DELETE', headers:{Authorization:'Bearer '+token}});
-  } catch(e) { log('Delete msg error: '+e.message,'e'); }
+    const r = await fetch('/api/messages/'+messageId, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body: JSON.stringify({content: newContent})
+    });
+    if (r.ok) {
+      editDiv.classList.remove('active');
+    } else {
+      log('Edit error: '+r.status, 'e');
+    }
+  } catch(e) { log('Edit error: '+e.message, 'e'); }
+}
+
+function toggleDelMenu(btn) {
+  // Close all other open menus first
+  document.querySelectorAll('.del-menu.open').forEach(m => {
+    if (m !== btn.nextElementSibling) m.classList.remove('open');
+  });
+  const menu = btn.nextElementSibling;
+  menu.classList.toggle('open');
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target) && e.target !== btn) {
+        menu.classList.remove('open');
+      }
+      document.removeEventListener('click', closeMenu);
+    });
+  }, 0);
+}
+
+async function deleteMsg(messageId, forEveryone) {
+  const confirmMsg = forEveryone
+    ? (curLang==='tr' ? 'Mesaj herkesten silinsin mi?' : 'Delete for everyone?')
+    : (curLang==='tr' ? 'Mesaj sadece sizden silinsin mi?' : 'Hide this message for you only?');
+  if (!confirm(confirmMsg)) return;
+
+  // Close any open delete menu
+  document.querySelectorAll('.del-menu.open').forEach(m => m.classList.remove('open'));
+
+  const url = forEveryone
+    ? '/api/messages/'+messageId
+    : '/api/messages/'+messageId+'/me';
+
+  try {
+    const r = await fetch(url, {method:'DELETE', headers:{Authorization:'Bearer '+token}});
+    if (r.ok || r.status === 204) {
+      const bubble = document.getElementById('msg-'+messageId);
+      if (bubble) {
+        const body = bubble.querySelector('.msg-body');
+        if (body) body.textContent = curLang==='tr' ? '[Mesaj silindi]' : '[Message deleted]';
+        const actions = bubble.querySelector('.bactions');
+        if (actions) actions.remove();
+        const editDiv = bubble.querySelector('.inline-edit');
+        if (editDiv) editDiv.remove();
+      }
+    } else {
+      log('Delete error: '+r.status, 'e');
+    }
+  } catch(e) { log('Delete error: '+e.message, 'e'); }
 }
 
 // ── bubble rendering ──────────────────────────────────────────────────────────
@@ -667,17 +745,58 @@ function addBubble(msg) {
   if (isOwn && msg.content !== '[Message deleted]') {
     const actions = document.createElement('div');
     actions.className = 'bactions';
+
+    // Edit button
     const editBtn = document.createElement('button');
-    editBtn.textContent = T('editBtn');
-    editBtn.title = 'Edit';
-    editBtn.onclick = () => startEdit(msg.id, msg.content);
-    const delBtn = document.createElement('button');
-    delBtn.textContent = T('deleteBtn');
-    delBtn.title = 'Delete';
-    delBtn.onclick = () => deleteMsg(msg.id);
+    editBtn.textContent = '✏ ' + (curLang==='tr' ? 'Düzenle' : 'Edit');
+    editBtn.onclick = () => startEdit(msg.id, msg.content, div);
     actions.appendChild(editBtn);
-    actions.appendChild(delBtn);
+
+    // Delete button + dropdown menu
+    const delWrapper = document.createElement('div');
+    delWrapper.style.cssText = 'position:relative;display:inline-block;';
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑 ' + (curLang==='tr' ? 'Sil' : 'Delete') + ' ▾';
+    delBtn.onclick = (e) => { e.stopPropagation(); toggleDelMenu(delBtn); };
+
+    const delMenu = document.createElement('div');
+    delMenu.className = 'del-menu';
+
+    const delForMe = document.createElement('button');
+    delForMe.textContent = curLang==='tr' ? '👁 Benden sil' : '👁 Delete for me';
+    delForMe.onclick = (e) => { e.stopPropagation(); deleteMsg(msg.id, false); };
+
+    const delForAll = document.createElement('button');
+    delForAll.className = 'danger';
+    delForAll.textContent = curLang==='tr' ? '🗑 Herkesten sil' : '🗑 Delete for everyone';
+    delForAll.onclick = (e) => { e.stopPropagation(); deleteMsg(msg.id, true); };
+
+    delMenu.appendChild(delForMe);
+    delMenu.appendChild(delForAll);
+    delWrapper.appendChild(delBtn);
+    delWrapper.appendChild(delMenu);
+    actions.appendChild(delWrapper);
     div.appendChild(actions);
+
+    // Inline edit area
+    const editDiv = document.createElement('div');
+    editDiv.className = 'inline-edit';
+    const textarea = document.createElement('textarea');
+    textarea.rows = 2;
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'ie-save';
+    saveBtn.textContent = curLang==='tr' ? '✓ Kaydet' : '✓ Save';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'ie-cancel';
+    cancelBtn.textContent = curLang==='tr' ? 'İptal' : 'Cancel';
+    editDiv.appendChild(textarea);
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    editDiv.appendChild(btnRow);
+    div.appendChild(editDiv);
   }
 
   list.appendChild(div);

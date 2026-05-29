@@ -22,23 +22,38 @@ public class MessageResponse {
     private String senderUsername;
     private String senderDisplayName;
     private boolean edited;
+    private boolean deletedForEveryone;
     private String fileUrl;
     private String fileName;
     private LocalDateTime createdAt;
     private LocalDateTime editedAt;
 
     public static MessageResponse from(Message message) {
+        return from(message, null);
+    }
+
+    public static MessageResponse from(Message message, String viewerUsername) {
+        boolean deletedForEveryone = message.isDeleted();
+        boolean hiddenForMe = viewerUsername != null
+                && message.getHiddenBy() != null
+                && message.getHiddenBy().contains(viewerUsername);
+
+        String content = (deletedForEveryone || hiddenForMe)
+                ? "[Message deleted]"
+                : message.getContent();
+
         return MessageResponse.builder()
                 .id(message.getId())
-                .content(message.isDeleted() ? "[Message deleted]" : message.getContent())
+                .content(content)
                 .type(message.getType())
                 .roomId(message.getRoom().getId())
                 .senderId(message.getSender().getId())
                 .senderUsername(message.getSender().getUsername())
                 .senderDisplayName(message.getSender().getDisplayName())
                 .edited(message.isEdited())
-                .fileUrl(message.isDeleted() ? null : message.getFileUrl())
-                .fileName(message.isDeleted() ? null : message.getFileName())
+                .deletedForEveryone(deletedForEveryone)
+                .fileUrl((deletedForEveryone || hiddenForMe) ? null : message.getFileUrl())
+                .fileName((deletedForEveryone || hiddenForMe) ? null : message.getFileName())
                 .createdAt(message.getCreatedAt())
                 .editedAt(message.getEditedAt())
                 .build();

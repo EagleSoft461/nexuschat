@@ -99,7 +99,7 @@ public class MessageService {
 
         return messages.getContent()
                 .stream()
-                .map(MessageResponse::from)
+                .map(m -> MessageResponse.from(m, username))
                 .collect(Collectors.toList());
     }
 
@@ -136,7 +136,29 @@ public class MessageService {
         }
 
         message.setDeleted(true);
+        message = messageRepository.save(message);
+
+        // Broadcast deletion to all room members via Redis
+        MessageResponse response = MessageResponse.from(message);
+        redisMessagePublisher.publishMessage("chat:" + message.getRoom().getId(), response);
+    }
+
+    /**
+     * Hide a message only for the requesting user (local delete).
+     * The message remains visible to others.
+     */
+    @Transactional
+    public void deleteMessageForMe(Long messageId, String username) {
+        Message message = messageRepository.findByIdWithSender(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found: " + messageId));
+
+        // Any room member can hide a message for themselves
+        if (message.getHiddenBy() == null) {
+            message.setHiddenBy(new java.util.HashSet<>());
+        }
+        message.getHiddenBy().add(username);
         messageRepository.save(message);
+        // No broadcast — only affects the requesting user's view
     }
 
     /**

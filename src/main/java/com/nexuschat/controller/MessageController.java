@@ -53,6 +53,15 @@ public class MessageController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Hide a message only for the current user (does not affect others) */
+    @DeleteMapping("/{messageId}/me")
+    public ResponseEntity<Void> deleteMessageForMe(
+            @PathVariable Long messageId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        messageService.deleteMessageForMe(messageId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
     /** Mark messages as read up to the given messageId */
     @PostMapping("/room/{roomId}/read/{messageId}")
     public ResponseEntity<Void> markAsRead(
