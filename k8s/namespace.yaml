@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexuschat
+  labels:
+    app.kubernetes.io/name: nexuschat
+    app.kubernetes.io/managed-by: kubectl
