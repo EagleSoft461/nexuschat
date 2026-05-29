@@ -72,3 +72,21 @@ rate-limit:
   auth:
     capacity: 10
     refill-per-minute: 10
+
+# RabbitMQ — STOMP broker relay
+# Set rabbitmq.enabled=false to fall back to in-memory broker (local dev without RabbitMQ)
+rabbitmq:
+  host: ${RABBITMQ_HOST:localhost}
+  port: ${RABBITMQ_PORT:5672}
+  stomp-port: ${RABBITMQ_STOMP_PORT:61613}
+  username: ${RABBITMQ_USERNAME:nexuschat}
+  password: ${RABBITMQ_PASSWORD:nexuschat}
+  enabled: ${RABBITMQ_ENABLED:false}   # false = use simple in-memory broker
+
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:nexuschat}
+    password: ${RABBITMQ_PASSWORD:nexuschat}
+    virtual-host: /

@@ -11,10 +11,18 @@ services:
       - SPRING_DATASOURCE_PASSWORD=nexuschat
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_STOMP_PORT=61613
+      - RABBITMQ_USERNAME=nexuschat
+      - RABBITMQ_PASSWORD=nexuschat
+      - RABBITMQ_ENABLED=true
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - nexuschat-network
@@ -61,6 +69,32 @@ services:
       - nexuschat-network
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: nexuschat-rabbitmq
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+      - "61613:61613"  # STOMP
+    environment:
+      RABBITMQ_DEFAULT_USER: nexuschat
+      RABBITMQ_DEFAULT_PASS: nexuschat
+    # Enable STOMP plugin on startup
+    command: >
+      sh -c "rabbitmq-plugins enable rabbitmq_stomp rabbitmq_web_stomp &&
+             rabbitmq-server"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - nexuschat-network
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.51.2
     container_name: nexuschat-prometheus
@@ -83,6 +117,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
   prometheus_data:
 
 networks:

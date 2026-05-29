@@ -130,6 +130,16 @@
             <version>8.10.1</version>
         </dependency>
 
+        <!-- RabbitMQ STOMP relay -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
