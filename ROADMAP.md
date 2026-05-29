@@ -53,31 +53,40 @@ This document tracks the development progress and future plans for NexusChat.
 
 ---
 
-## 📋 Sprint 4 — Scaling & Production (Planned)
+## ✅ Sprint 4 — Scaling & Production (Completed) — v4.0.0
 
-- [ ] Replace simple STOMP broker with RabbitMQ (full message broker)
-- [ ] Rate limiting — prevent message spam per user
-- [ ] Refresh token support — extend session without re-login
-- [ ] Pagination improvement — cursor-based instead of offset
-- [ ] Kubernetes deployment manifests (Deployment, Service, ConfigMap)
-- [ ] Health check endpoint (`/actuator/health`)
-- [ ] Metrics with Micrometer + Prometheus
-- [ ] Centralized logging with ELK stack or Loki
+- [x] RabbitMQ STOMP broker relay — replaces in-memory broker, full message broker with fallback
+- [x] Rate limiting — Redis token bucket (Bucket4j), per-user/IP, 429 with retry headers
+- [x] Refresh token support — rotation on each use, revoke all on logout
+- [x] Kubernetes manifests — Deployment, Service, ConfigMap, Secret, Ingress, HPA, PVC
+- [x] Health check endpoint — `/actuator/health` via Spring Boot Actuator
+- [x] Metrics with Micrometer + Prometheus — `/actuator/prometheus`, K8s pod auto-discovery
+- [x] Delete for me / Delete for everyone — per-user message hiding + real-time broadcast
+- [x] Inline message editing — textarea on bubble, Enter to save, Escape to cancel
 
 ---
 
-## 💡 Future Ideas
+## � Sprint 5 — Observability & Polish (Planned)
+
+- [ ] Centralized logging with ELK stack or Loki
+- [ ] Cursor-based pagination (instead of offset)
+- [ ] Message search with Elasticsearch
+- [ ] Admin panel — manage users, rooms, messages
+- [ ] Unit tests — AuthService, MessageService, RoomService
+- [ ] Integration tests — WebSocket flow end-to-end
+
+---
+
+## �💡 Future Ideas
 
 - [ ] End-to-end encryption for private messages
 - [ ] Push notifications (Firebase FCM)
 - [ ] Mobile client (React Native or Flutter)
-- [ ] Message search with Elasticsearch
 - [ ] Bot/webhook support — post messages via API key
-- [ ] Admin panel — manage users, rooms, messages
 
 ---
 
-##  Tech Debt
+## 📌 Tech Debt
 
 - Add unit tests for `AuthService`, `MessageService`, `RoomService`
 - Add integration tests for WebSocket flow
@@ -93,3 +102,4 @@ This document tracks the development progress and future plans for NexusChat.
 | v1.0.0 | — | Initial release — Sprint 1 complete. Core infrastructure: JWT auth, WebSocket, Redis Pub/Sub, PostgreSQL, Docker. |
 | v2.0.0 | — | Sprint 2 complete. Presence system, typing indicator, WebSocket auth interceptor, global error handling, multi-language UI, room deletion, Swagger. |
 | v3.0.0 | 2026-05-26 | Sprint 3 complete. Read receipts, message editing, file/image attachments, private rooms with invite, direct messages (DM), unread message count, UI enhancements, critical bug fixes. |
+| v4.0.0 | 2026-05-29 | Sprint 4 complete. RabbitMQ STOMP broker relay, Redis rate limiting (Bucket4j), refresh tokens, Kubernetes manifests (Deployment/Service/HPA/Ingress/PVC), Actuator health checks, Prometheus metrics, delete for me/everyone, inline message editing. |
