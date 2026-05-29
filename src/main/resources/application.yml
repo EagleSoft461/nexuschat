@@ -46,3 +46,32 @@ logging:
   level:
     com.nexuschat: DEBUG
     org.springframework.web.socket: INFO
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# Rate limiting (per user, per minute)
+rate-limit:
+  message:
+    capacity: 30          # max burst
+    refill-per-minute: 30 # tokens refilled per minute
+  auth:
+    capacity: 10
+    refill-per-minute: 10
+
+# Refresh token
+jwt:
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in ms

@@ -1,8 +1,10 @@
 package com.nexuschat.service;
 
 import com.nexuschat.dto.request.LoginRequest;
+import com.nexuschat.dto.request.RefreshTokenRequest;
 import com.nexuschat.dto.request.RegisterRequest;
 import com.nexuschat.dto.response.AuthResponse;
+import com.nexuschat.model.RefreshToken;
 import com.nexuschat.model.User;
 import com.nexuschat.repository.UserRepository;
 import com.nexuschat.security.JwtUtil;
@@ -18,20 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
+    @Autowired private UserRepository userRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private AuthenticationManager authenticationManager;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private UserDetailsService userDetailsService;
+    @Autowired private RefreshTokenService refreshTokenService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -51,20 +45,16 @@ public class AuthService {
                         : request.getUsername())
                 .build();
 
-        userRepository.save(user);
+        user = userRepository.save(user);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-        String token = jwtUtil.generateToken(userDetails);
+        String accessToken = jwtUtil.generateToken(userDetails);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return AuthResponse.builder()
-                .token(token)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .displayName(user.getDisplayName())
-                .build();
+        return buildResponse(accessToken, refreshToken.getToken(), user);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -74,10 +64,35 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-        String token = jwtUtil.generateToken(userDetails);
+        String accessToken = jwtUtil.generateToken(userDetails);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
+        return buildResponse(accessToken, refreshToken.getToken(), user);
+    }
+
+    @Transactional
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.verifyAndGet(request.getRefreshToken());
+        User user = refreshToken.getUser();
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String newAccessToken = jwtUtil.generateToken(userDetails);
+        // Rotate refresh token on each use
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+        return buildResponse(newAccessToken, newRefreshToken.getToken(), user);
+    }
+
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.verifyAndGet(request.getRefreshToken());
+        refreshTokenService.revokeAllForUser(refreshToken.getUser());
+    }
+
+    private AuthResponse buildResponse(String accessToken, String refreshToken, User user) {
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
+                .refreshToken(refreshToken)
                 .userId(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())

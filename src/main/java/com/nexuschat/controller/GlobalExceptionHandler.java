@@ -54,6 +54,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.UNAUTHORIZED, "Invalid username or password", null);
     }
 
+    // Token süresi dolmuş veya geçersiz refresh token (400)
+    @ExceptionHandler(io.jsonwebtoken.JwtException.class)
+    public ResponseEntity<Map<String, Object>> handleJwtException(io.jsonwebtoken.JwtException ex) {
+        return error(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null);
+    }
+
     // Beklenmeyen hatalar (500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
