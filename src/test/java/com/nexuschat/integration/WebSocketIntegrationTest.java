@@ -1,0 +1,187 @@
+package com.nexuschat.integration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexuschat.dto.request.SendMessageRequest;
+import com.nexuschat.dto.response.MessageResponse;
+import com.nexuschat.model.Message;
+import com.nexuschat.model.Room;
+import com.nexuschat.model.RoomMember;
+import com.nexuschat.model.User;
+import com.nexuschat.repository.RoomMemberRepository;
+import com.nexuschat.repository.RoomRepository;
+import com.nexuschat.repository.UserRepository;
+import com.nexuschat.security.JwtUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.stomp.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.Transport;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+class WebSocketIntegrationTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    @Autowired
+    private RoomMemberRepository roomMemberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private String wsUrl;
+    private User testUser;
+    private Room testRoom;
+    private String jwtToken;
+
+    @BeforeEach
+    void setUp() {
+        wsUrl = "ws://localhost:" + port + "/ws";
+
+        // Clean up
+        roomMemberRepository.deleteAll();
+        roomRepository.deleteAll();
+        userRepository.deleteAll();
+
+        // Create test user
+        testUser = User.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .password(passwordEncoder.encode("password"))
+                .displayName("Test User")
+                .build();
+        testUser = userRepository.save(testUser);
+
+        // Create test room
+        testRoom = Room.builder()
+                .name("Test Room")
+                .type(Room.RoomType.PUBLIC)
+                .createdBy(testUser)
+                .build();
+        testRoom = roomRepository.save(testRoom);
+
+        // Add user to room
+        RoomMember member = RoomMember.builder()
+                .room(testRoom)
+                .user(testUser)
+                .role(RoomMember.MemberRole.OWNER)
+                .build();
+        roomMemberRepository.save(member);
+
+        // Generate JWT token
+        org.springframework.security.core.userdetails.UserDetails userDetails =
+                org.springframework.security.core.userdetails.User.builder()
+                        .username(testUser.getUsername())
+                        .password(testUser.getPassword())
+                        .authorities("ROLE_USER")
+                        .build();
+        jwtToken = jwtUtil.generateToken(userDetails);
+    }
+
+    @Test
+    void testWebSocketMessageFlow() throws Exception {
+        // Arrange
+        BlockingQueue<MessageResponse> receivedMessages = new LinkedBlockingQueue<>();
+
+        List<Transport> transports = new ArrayList<>();
+        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
+        SockJsClient sockJsClient = new SockJsClient(transports);
+
+        WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
+        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+
+        StompHeaders connectHeaders = new StompHeaders();
+        connectHeaders.add("Authorization", "Bearer " + jwtToken);
+
+        StompSession session = stompClient.connectAsync(wsUrl, new StompSessionHandlerAdapter() {})
+                .get(5, TimeUnit.SECONDS);
+
+        assertNotNull(session);
+        assertTrue(session.isConnected());
+
+        // Subscribe to room topic
+        session.subscribe("/topic/room." + testRoom.getId(), new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                return MessageResponse.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                receivedMessages.add((MessageResponse) payload);
+            }
+        });
+
+        // Act - Send message
+        SendMessageRequest request = new SendMessageRequest();
+        request.setRoomId(testRoom.getId());
+        request.setContent("Hello WebSocket!");
+        request.setType(Message.MessageType.TEXT);
+
+        session.send("/app/chat.send", request);
+
+        // Assert - Wait for message
+        MessageResponse received = receivedMessages.poll(5, TimeUnit.SECONDS);
+        assertNotNull(received, "Should receive message via WebSocket");
+        assertEquals("Hello WebSocket!", received.getContent());
+        assertEquals(testUser.getUsername(), received.getSenderUsername());
+
+        // Cleanup
+        session.disconnect();
+    }
+
+    @Test
+    void testWebSocketAuthenticationFailure() throws Exception {
+        // Arrange
+        List<Transport> transports = new ArrayList<>();
+        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
+        SockJsClient sockJsClient = new SockJsClient(transports);
+
+        WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
+        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+
+        StompHeaders connectHeaders = new StompHeaders();
+        connectHeaders.add("Authorization", "Bearer invalid-token");
+
+        // Act & Assert
+        try {
+            stompClient.connectAsync(wsUrl, new StompSessionHandlerAdapter() {})
+                    .get(5, TimeUnit.SECONDS);
+            fail("Should throw exception for invalid token");
+        } catch (Exception e) {
+            // Expected - connection should fail with invalid token
+            assertTrue(e.getMessage().contains("Connection") || e.getCause() != null);
+        }
+    }
+}
