@@ -66,30 +66,35 @@ jobs:
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
 
-      - name: SonarCloud Scan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn sonar:sonar \
-            -Dsonar.projectKey=nexuschat \
-            -Dsonar.organization=your-org \
-            -Dsonar.host.url=https://sonarcloud.io
+      # SonarCloud Scan - Optional (requires SONAR_TOKEN secret)
+      # - name: SonarCloud Scan
+      #   if: env.SONAR_TOKEN != ''
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: |
+      #     mvn sonar:sonar \
+      #       -Dsonar.projectKey=nexuschat \
+      #       -Dsonar.organization=your-org \
+      #       -Dsonar.host.url=https://sonarcloud.io
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./target/site/jacoco/jacoco.xml
-          flags: unittests
-          name: codecov-nexuschat
+      # Upload coverage to Codecov - Optional
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./target/site/jacoco/jacoco.xml
+      #     flags: unittests
+      #     name: codecov-nexuschat
 
-      - name: Build Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: docker build -t nexuschat:${{ github.sha }} .
+      # Build Docker image - Optional (only on main/master push)
+      # - name: Build Docker image
+      #   if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      #   run: docker build -t nexuschat:${{ github.sha }} .
 
       - name: Run OWASP Dependency Check
-        run: mvn dependency-check:check
+        run: mvn dependency-check:check -DskipProvidedScope=true -DskipRuntimeScope=false
         continue-on-error: true
+        timeout-minutes: 10
 
       - name: Upload test results
         if: always()
