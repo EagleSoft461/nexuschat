@@ -73,11 +73,10 @@ This document tracks the development progress and future plans for NexusChat.
 - [x] Cursor-based pagination — implemented for message loading
 - [x] Admin panel — full UI with user/room management
 - [x] Centralized logging — JSON format with Logstash encoder (Loki/Grafana ready)
-- [x] CI/CD Pipeline — GitHub Actions with automated testing
-- [x] Test Coverage — JaCoCo integration with 50% minimum threshold
-- [x] Code Quality — Checkstyle + SpotBugs + OWASP Dependency Check
+- [x] Test Coverage — JaCoCo integration for measuring code coverage
 - [x] Database Migration — Flyway for version-controlled schema changes
-- [x] SonarCloud Integration — continuous code quality monitoring
+- [ ] CI/CD Pipeline — GitHub Actions (optional, can be added later)
+- [ ] Code Quality Tools — SonarCloud, Checkstyle (optional, can be added later)
 - [ ] Message search with Elasticsearch (deferred - optional for v6.0.0)
 
 ---
@@ -100,7 +99,6 @@ This document tracks the development progress and future plans for NexusChat.
 - ~~Add unit tests for `AuthService`, `MessageService`, `RoomService`~~ ✅ Completed
 - ~~Add integration tests for WebSocket flow~~ ✅ Created
 - ~~Add JaCoCo test coverage reporting~~ ✅ Completed
-- ~~Add CI/CD pipeline with GitHub Actions~~ ✅ Completed
 - ~~Add Flyway database migrations~~ ✅ Completed
 - ~~Add structured JSON logging~~ ✅ Completed
 - ~~Implement active users tracking in admin stats~~ ✅ Completed
@@ -109,6 +107,8 @@ This document tracks the development progress and future plans for NexusChat.
 - [ ] Implement user enable/disable feature (ban/unban)
 - [ ] Add API rate limiting for WebSocket connections
 - [ ] Add request/response examples to Swagger documentation
+- [ ] Add CI/CD pipeline (GitHub Actions, SonarCloud) - Optional
+- [ ] Add automated security scanning (OWASP) - Optional
 
 ---
 
@@ -120,4 +120,4 @@ This document tracks the development progress and future plans for NexusChat.
 | v2.0.0 | 2026-05-10 | Sprint 2 complete. Presence system, typing indicator, WebSocket auth interceptor, global error handling, multi-language UI, room deletion, Swagger. |
 | v3.0.0 | 2026-05-26 | Sprint 3 complete. Read receipts, message editing, file/image attachments, private rooms with invite, direct messages (DM), unread message count, UI enhancements, critical bug fixes. |
 | v4.0.0 | 2026-05-29 | Sprint 4 complete. RabbitMQ STOMP broker relay, Redis rate limiting (Bucket4j), refresh tokens, Kubernetes manifests (Deployment/Service/HPA/Ingress/PVC), Actuator health checks, Prometheus metrics, delete for me/everyone, inline message editing. |
-| v5.0.0 | 2026-06-05 | **🎉 PRODUCTION READY** — Sprint 5 complete. CI/CD Pipeline (GitHub Actions), Test Coverage (JaCoCo 50%+), Code Quality tools (Checkstyle, SpotBugs, OWASP), Database migrations (Flyway), Structured logging (JSON/Logstash), SonarCloud integration, Cursor-based pagination, Admin Panel. Enterprise-grade features complete. |
+| v5.0.0 | 2026-06-05 | **🎉 PRODUCTION READY** — Sprint 5 complete. Test Coverage (JaCoCo), Database migrations (Flyway), Structured logging (JSON/Logstash), Cursor-based pagination, Admin Panel, Unit & Integration tests (30+). Enterprise-grade features complete. |
