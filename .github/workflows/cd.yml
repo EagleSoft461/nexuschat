@@ -1,11 +1,11 @@
 name: CD - Deploy
 
 on:
-  push:
-    branches: [master]
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual trigger, no automatic deployment
+  # push:
+  #   branches: [master]
+  #   tags:
+  #     - 'v*.*.*'
 
 env:
   REGISTRY: docker.io

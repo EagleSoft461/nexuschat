@@ -1,12 +1,12 @@
 name: Docker Publish
 
 on:
-  push:
-    branches: [master]
-    tags: ['v*']
-  release:
-    types: [published]
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual trigger
+  # push:
+  #   branches: [master]
+  #   tags: ['v*']
+  # release:
+  #   types: [published]
 
 env:
   REGISTRY: docker.io
