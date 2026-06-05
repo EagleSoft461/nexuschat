@@ -1,6 +1,7 @@
 package com.nexuschat.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexuschat.constant.WebSocketDestinations;
 import com.nexuschat.dto.response.MessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +32,14 @@ public class RedisMessageSubscriber implements MessageListener {
                 String roomId = channel.substring(5);
                 MessageResponse messageResponse = objectMapper.readValue(body, MessageResponse.class);
                 // Broadcast to all subscribers of the room topic
-                messagingTemplate.convertAndSend("/topic/room." + roomId, messageResponse);
+                messagingTemplate.convertAndSend(
+                    WebSocketDestinations.getRoomTopic(Long.parseLong(roomId)), 
+                    messageResponse
+                );
 
             } else if (channel.startsWith("presence:")) {
                 // Broadcast presence update to all connected clients
-                messagingTemplate.convertAndSend("/topic/presence", body);
+                messagingTemplate.convertAndSend(WebSocketDestinations.TOPIC_PRESENCE, body);
             }
         } catch (Exception e) {
             log.error("Error processing Redis message on channel {}: {}", channel, e.getMessage());

@@ -10,18 +10,30 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
   data:
     redis:
       host: localhost
       port: 6379
       timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:nexuschat}
+    password: ${RABBITMQ_PASSWORD:nexuschat}
+    virtual-host: /
 
   jackson:
     serialization:
@@ -37,18 +49,16 @@ server:
       force: true
 
 # WARNING: Change jwt.secret before deploying to production!
-# Must be at least 256 bits (32 characters). Use environment variable JWT_SECRET in production.
 jwt:
   secret: ${JWT_SECRET:nexuschat-super-secret-key-change-in-production-must-be-at-least-256-bits}
-  expiration: ${JWT_EXPIRATION:86400000}          # 24 hours in milliseconds
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 logging:
   level:
     com.nexuschat: DEBUG
     org.springframework.web.socket: INFO
 
-# Actuator
 management:
   endpoints:
     web:
@@ -64,29 +74,21 @@ management:
     tags:
       application: ${spring.application.name}
 
-# Rate limiting (per user, per minute)
 rate-limit:
   message:
-    capacity: 30          # max burst
-    refill-per-minute: 30 # tokens refilled per minute
+    capacity: 30
+    refill-per-minute: 30
   auth:
     capacity: 10
     refill-per-minute: 10
+  websocket:
+    capacity: 60
+    refill-per-minute: 60
 
-# RabbitMQ — STOMP broker relay
-# Set rabbitmq.enabled=false to fall back to in-memory broker (local dev without RabbitMQ)
 rabbitmq:
   host: ${RABBITMQ_HOST:localhost}
   port: ${RABBITMQ_PORT:5672}
   stomp-port: ${RABBITMQ_STOMP_PORT:61613}
   username: ${RABBITMQ_USERNAME:nexuschat}
   password: ${RABBITMQ_PASSWORD:nexuschat}
-  enabled: ${RABBITMQ_ENABLED:false}   # false = use simple in-memory broker
-
-spring:
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:nexuschat}
-    password: ${RABBITMQ_PASSWORD:nexuschat}
-    virtual-host: /
+  enabled: ${RABBITMQ_ENABLED:false}

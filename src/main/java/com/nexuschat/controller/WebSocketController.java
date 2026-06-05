@@ -1,5 +1,6 @@
 package com.nexuschat.controller;
 
+import com.nexuschat.constant.WebSocketDestinations;
 import com.nexuschat.dto.request.EditMessageRequest;
 import com.nexuschat.dto.request.SendMessageRequest;
 import com.nexuschat.service.MessageService;
@@ -66,7 +67,7 @@ public class WebSocketController {
             event.put("username", principal.getName());
             event.put("messageId", messageId);
             event.put("roomId", roomId);
-            messagingTemplate.convertAndSend("/topic/room." + roomId + ".read", event);
+            messagingTemplate.convertAndSend(WebSocketDestinations.getRoomReadTopic(roomId), event);
         } catch (NumberFormatException ignored) {}
     }
 
@@ -88,12 +89,12 @@ public class WebSocketController {
             event.put("username", principal.getName());
             event.put("typing", isTyping);
             event.put("roomId", roomId);
-            messagingTemplate.convertAndSend("/topic/room." + roomId + ".typing", event);
+            messagingTemplate.convertAndSend(WebSocketDestinations.getRoomTypingTopic(roomId), event);
         } catch (NumberFormatException ignored) {}
     }
 
     @MessageMapping("/presence.list")
-    @SendToUser("/queue/presence.list")
+    @SendToUser(WebSocketDestinations.QUEUE_PRESENCE_LIST)
     public Set<String> getOnlineUsers(SimpMessageHeaderAccessor headerAccessor) {
         return presenceService.getOnlineUsers();
     }

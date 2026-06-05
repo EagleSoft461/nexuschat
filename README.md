@@ -184,7 +184,9 @@ mvn spring-boot:run
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
 | POST | `/api/auth/register` | Register new user | ❌ |
-| POST | `/api/auth/login` | Login, returns JWT | ❌ |
+| POST | `/api/auth/login` | Login, returns JWT + refresh token | ❌ |
+| POST | `/api/auth/refresh` | Rotate refresh token | ❌ |
+| POST | `/api/auth/logout` | Revoke refresh tokens | ❌ |
 
 ### Rooms
 
@@ -196,6 +198,8 @@ mvn spring-boot:run
 | GET | `/api/rooms/{id}` | Room details | ✅ |
 | POST | `/api/rooms/{id}/join` | Join a room | ✅ |
 | POST | `/api/rooms/{id}/leave` | Leave a room | ✅ |
+| POST | `/api/rooms/dm` | Start or get DM room | ✅ |
+| POST | `/api/rooms/{id}/invite` | Invite user (private room) | ✅ |
 
 ### Messages
 
@@ -203,7 +207,19 @@ mvn spring-boot:run
 |---|---|---|---|
 | POST | `/api/messages` | Send message (REST) | ✅ |
 | GET | `/api/messages/room/{roomId}` | Paginated history | ✅ |
-| DELETE | `/api/messages/{id}` | Soft delete message | ✅ |
+| GET | `/api/messages/room/{roomId}/cursor` | Cursor-based history | ✅ |
+| PATCH | `/api/messages/{id}` | Edit message | ✅ |
+| DELETE | `/api/messages/{id}` | Delete for everyone | ✅ |
+| DELETE | `/api/messages/{id}/me` | Delete for me | ✅ |
+| GET | `/api/messages/room/{roomId}/unread` | Unread count | ✅ |
+
+### Admin
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | `/api/admin/stats` | Platform statistics | ADMIN |
+| GET | `/api/admin/users` | List users | ADMIN |
+| PATCH | `/api/admin/users/{id}/toggle-status` | Ban/unban user | ADMIN |
 
 ---
 

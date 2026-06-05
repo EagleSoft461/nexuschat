@@ -176,6 +176,15 @@
             color: #212529;
         }
 
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
         .btn-warning:hover {
             background: #e0a800;
         }
@@ -336,17 +345,23 @@
                 
                 const users = await response.json();
                 
-                let html = '<table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Display Name</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+                let html = '<table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
                 
                 users.forEach(user => {
+                    const statusLabel = user.enabled ? 'Active' : 'Banned';
+                    const statusClass = user.enabled ? 'badge-public' : 'badge-private';
+                    const banLabel = user.enabled ? 'Ban' : 'Unban';
+                    const banClass = user.enabled ? 'btn-warning' : 'btn-success';
                     html += `
                         <tr>
                             <td>${user.id}</td>
                             <td>${user.username}</td>
                             <td>${user.email}</td>
-                            <td>${user.displayName}</td>
+                            <td><span class="badge">${user.role || 'USER'}</span></td>
+                            <td><span class="badge ${statusClass}">${statusLabel}</span></td>
                             <td>${new Date(user.createdAt).toLocaleDateString()}</td>
                             <td>
+                                <button class="action-btn ${banClass}" onclick="toggleUserStatus(${user.id}, '${user.username}', ${user.enabled})">${banLabel}</button>
                                 <button class="action-btn btn-danger" onclick="deleteUser(${user.id}, '${user.username}')">Delete</button>
                             </td>
                         </tr>
@@ -397,6 +412,29 @@
             } catch (error) {
                 console.error('Error loading rooms:', error);
                 container.innerHTML = '<div class="loading">Failed to load rooms</div>';
+            }
+        }
+
+        async function toggleUserStatus(userId, username, isEnabled) {
+            const action = isEnabled ? 'ban' : 'unban';
+            if (!confirm(`Are you sure you want to ${action} user "${username}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/toggle-status`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error(`Failed to ${action} user`);
+
+                alert(`User ${action}ned successfully`);
+                loadUsers();
+                loadStats();
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+                alert(`Failed to ${action} user`);
             }
         }
 

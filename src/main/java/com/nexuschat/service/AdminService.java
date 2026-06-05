@@ -99,16 +99,13 @@ public class AdminService {
     }
 
     /**
-     * Ban/unban user
-     * Note: Requires 'enabled' field in User model for full implementation
-     * Currently marks user for deletion as alternative approach
+     * Ban/unban user by toggling active status
      */
     @Transactional
     public void toggleUserStatus(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        // Alternative: For now, this is a placeholder for future user enable/disable feature
-        // In production, add 'enabled' field to User entity and toggle it here
+        user.setActive(!user.isActive());
         userRepository.save(user);
     }
 }

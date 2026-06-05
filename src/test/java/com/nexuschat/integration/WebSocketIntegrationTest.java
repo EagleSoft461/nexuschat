@@ -13,6 +13,7 @@ import com.nexuschat.repository.UserRepository;
 import com.nexuschat.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -20,6 +21,7 @@ import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
@@ -37,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@EnabledIf("com.nexuschat.integration.TestInfrastructure#isAvailable")
 class WebSocketIntegrationTest {
 
     @LocalServerPort
@@ -124,7 +127,8 @@ class WebSocketIntegrationTest {
         StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add("Authorization", "Bearer " + jwtToken);
 
-        StompSession session = stompClient.connectAsync(wsUrl, new StompSessionHandlerAdapter() {})
+        StompSession session = stompClient.connectAsync(
+                        wsUrl, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {})
                 .get(5, TimeUnit.SECONDS);
 
         assertNotNull(session);
@@ -176,7 +180,8 @@ class WebSocketIntegrationTest {
 
         // Act & Assert
         try {
-            stompClient.connectAsync(wsUrl, new StompSessionHandlerAdapter() {})
+            stompClient.connectAsync(
+                            wsUrl, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {})
                     .get(5, TimeUnit.SECONDS);
             fail("Should throw exception for invalid token");
         } catch (Exception e) {

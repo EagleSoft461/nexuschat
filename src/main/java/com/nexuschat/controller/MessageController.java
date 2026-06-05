@@ -5,6 +5,12 @@ import com.nexuschat.dto.request.SendMessageRequest;
 import com.nexuschat.dto.response.MessageResponse;
 import com.nexuschat.dto.response.UnreadCountResponse;
 import com.nexuschat.service.MessageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +22,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/messages")
+@Tag(name = "Messages", description = "Send, edit, delete and read messages")
 public class MessageController {
 
     @Autowired
     private MessageService messageService;
 
+    @Operation(summary = "Send a message to a room")
+    @ApiResponse(responseCode = "200", description = "Message sent",
+            content = @Content(schema = @Schema(implementation = MessageResponse.class)))
     @PostMapping
     public ResponseEntity<MessageResponse> sendMessage(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(examples = @ExampleObject(value = """
+                            {"roomId":1,"content":"Hello!","type":"TEXT"}
+                            """)))
             @Valid @RequestBody SendMessageRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(messageService.sendMessage(request, userDetails.getUsername()));

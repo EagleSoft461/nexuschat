@@ -36,6 +36,11 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private Role role = Role.USER;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
@@ -50,4 +55,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RoomMember> roomMemberships;
+
+    public enum Role {
+        USER, ADMIN
+    }
 }

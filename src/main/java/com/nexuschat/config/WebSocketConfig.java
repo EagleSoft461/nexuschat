@@ -16,6 +16,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private WebSocketAuthInterceptor webSocketAuthInterceptor;
 
+    @Autowired
+    private WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
+
     @Value("${rabbitmq.host:localhost}")
     private String rabbitHost;
 
@@ -63,6 +66,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketAuthInterceptor);
+        registration.interceptors(webSocketAuthInterceptor, webSocketRateLimitInterceptor);
     }
 }

@@ -22,12 +22,14 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/stats")
     @Operation(summary = "Get platform statistics")
     public ResponseEntity<AdminStatsResponse> getStats() {
         return ResponseEntity.ok(adminService.getStats());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     @Operation(summary = "Get all users with pagination")
     public ResponseEntity<List<UserResponse>> getAllUsers(
@@ -36,6 +38,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllUsers(page, size));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/rooms")
     @Operation(summary = "Get all rooms with pagination")
     public ResponseEntity<List<RoomResponse>> getAllRooms(
@@ -44,6 +47,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllRooms(page, size));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/users/{userId}")
     @Operation(summary = "Delete a user")
     public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
@@ -51,6 +55,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/rooms/{roomId}")
     @Operation(summary = "Delete a room")
     public ResponseEntity<Void> deleteRoom(@PathVariable Long roomId) {
@@ -58,6 +63,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/users/{userId}/toggle-status")
     @Operation(summary = "Ban/unban a user")
     public ResponseEntity<Void> toggleUserStatus(@PathVariable Long userId) {

@@ -17,8 +17,9 @@ public class UserResponse {
     private String username;
     private String email;
     private String displayName;
-    private LocalDateTime createdAt;
+    private String role;
     private boolean enabled;
+    private LocalDateTime createdAt;
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -26,8 +27,9 @@ public class UserResponse {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
+                .role(user.getRole().name())
+                .enabled(user.isActive())
                 .createdAt(user.getCreatedAt())
-                .enabled(true) // Add enabled field to User model if needed
                 .build();
     }
 }

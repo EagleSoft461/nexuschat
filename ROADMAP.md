@@ -75,13 +75,23 @@ This document tracks the development progress and future plans for NexusChat.
 - [x] Centralized logging — JSON format with Logstash encoder (Loki/Grafana ready)
 - [x] Test Coverage — JaCoCo integration for measuring code coverage
 - [x] Database Migration — Flyway for version-controlled schema changes
-- [ ] CI/CD Pipeline — GitHub Actions (optional, can be added later)
+- [x] CI/CD Pipeline — GitHub Actions
 - [ ] Code Quality Tools — SonarCloud, Checkstyle (optional, can be added later)
 - [ ] Message search with Elasticsearch (deferred - optional for v6.0.0)
 
 ---
 
-## 🚀 Sprint 6 — Future Ideas
+## ✅ Sprint 6 — Critical Fixes & Code Quality (Completed) — v6.0.0
+
+- [x] Extract magic strings to constants — `WebSocketDestinations` class for all STOMP paths
+- [x] Method-level @PreAuthorize — Explicit authorization on all admin endpoints
+- [x] User ban/unban feature — Complete implementation with `active` field and role system
+- [x] Role-Based Access Control (RBAC) — USER and ADMIN roles properly implemented
+- [x] Security hardening — Disabled users cannot login, proper authority mapping
+
+---
+
+## 🚀 Sprint 7 — Future Ideas
 
 - [ ] End-to-end encryption for private messages
 - [ ] Push notifications (Firebase FCM)
@@ -102,13 +112,14 @@ This document tracks the development progress and future plans for NexusChat.
 - ~~Add Flyway database migrations~~ ✅ Completed
 - ~~Add structured JSON logging~~ ✅ Completed
 - ~~Implement active users tracking in admin stats~~ ✅ Completed
-- [ ] Extract magic strings (channel prefixes, topic paths) to constants
-- [ ] Add `@PreAuthorize` role checks on all admin endpoints
-- [ ] Implement user enable/disable feature (ban/unban)
-- [ ] Add API rate limiting for WebSocket connections
-- [ ] Add request/response examples to Swagger documentation
-- [ ] Add CI/CD pipeline (GitHub Actions, SonarCloud) - Optional
+- ~~Extract magic strings (channel prefixes, topic paths) to constants~~ ✅ Completed
+- ~~Add `@PreAuthorize` role checks on all admin endpoints~~ ✅ Completed
+- ~~Implement user enable/disable feature (ban/unban)~~ ✅ Completed
+- [x] Add API rate limiting for WebSocket connections
+- [x] Add request/response examples to Swagger documentation (auth + messages)
+- [x] Add CI/CD pipeline (GitHub Actions)
 - [ ] Add automated security scanning (OWASP) - Optional
+- [ ] Increase test coverage to 70%+ (partial — controller tests added)
 
 ---
 
@@ -120,4 +131,5 @@ This document tracks the development progress and future plans for NexusChat.
 | v2.0.0 | 2026-05-10 | Sprint 2 complete. Presence system, typing indicator, WebSocket auth interceptor, global error handling, multi-language UI, room deletion, Swagger. |
 | v3.0.0 | 2026-05-26 | Sprint 3 complete. Read receipts, message editing, file/image attachments, private rooms with invite, direct messages (DM), unread message count, UI enhancements, critical bug fixes. |
 | v4.0.0 | 2026-05-29 | Sprint 4 complete. RabbitMQ STOMP broker relay, Redis rate limiting (Bucket4j), refresh tokens, Kubernetes manifests (Deployment/Service/HPA/Ingress/PVC), Actuator health checks, Prometheus metrics, delete for me/everyone, inline message editing. |
-| v5.0.0 | 2026-06-05 | **🎉 PRODUCTION READY** — Sprint 5 complete. Test Coverage (JaCoCo), Database migrations (Flyway), Structured logging (JSON/Logstash), Cursor-based pagination, Admin Panel, Unit & Integration tests (30+). Enterprise-grade features complete. |
+| v5.0.0 | 2026-06-05 | Sprint 5 complete. Test Coverage (JaCoCo), Database migrations (Flyway), Structured logging (JSON/Logstash), Cursor-based pagination, Admin Panel, Unit & Integration tests (30+). |
+| v6.0.0 | 2026-06-05 | Sprint 6 hardened. Flyway schema fixes, ban/unban admin UI, WebSocket rate limiting, `@EnableMethodSecurity`, GitHub Actions CI, Swagger examples, performance indexes, `ddl-auto=validate`. |
