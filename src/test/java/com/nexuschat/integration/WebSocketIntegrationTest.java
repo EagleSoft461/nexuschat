@@ -74,7 +74,8 @@ class WebSocketIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        wsUrl = "ws://localhost:" + port + "/ws";
+        // SockJS client requires http:// base URL, not ws://
+        wsUrl = "http://localhost:" + port + "/ws";
 
         // Clean up
         roomMemberRepository.deleteAll();
