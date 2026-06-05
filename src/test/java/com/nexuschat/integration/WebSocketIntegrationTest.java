@@ -12,6 +12,7 @@ import com.nexuschat.repository.RoomRepository;
 import com.nexuschat.repository.UserRepository;
 import com.nexuschat.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @EnabledIf("com.nexuschat.integration.TestInfrastructure#isAvailable")
