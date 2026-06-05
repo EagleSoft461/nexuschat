@@ -188,6 +188,19 @@ mvn spring-boot:run
 
 ## 📡 API Reference
 
+### 📦 Postman Collection
+
+Import the complete API collection to test all endpoints:
+👉 [NexusChat.postman_collection.json](./postman/NexusChat.postman_collection.json)
+
+**Quick Start:**
+1. Import the collection into Postman
+2. Set `base_url` variable to `http://localhost:8080`
+3. Run "Login" request - JWT token will be auto-saved
+4. All authenticated endpoints will use the saved token automatically
+
+---
+
 ### Authentication
 
 | Method | Endpoint | Description | Auth |
