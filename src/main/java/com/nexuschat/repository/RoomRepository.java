@@ -38,4 +38,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     java.util.Optional<Room> findDirectMessageRoom(
             @Param("user1") com.nexuschat.model.User user1,
             @Param("user2") com.nexuschat.model.User user2);
+
+    // Count rooms by type
+    long countByType(Room.RoomType type);
 }

@@ -86,4 +86,14 @@ public class MessageController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(messageService.getAllUnreadCounts(userDetails.getUsername()));
     }
+
+    /** Cursor-based pagination: get messages before a cursor (older messages) */
+    @GetMapping("/room/{roomId}/cursor")
+    public ResponseEntity<List<MessageResponse>> getRoomMessagesCursor(
+            @PathVariable Long roomId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "50") int limit,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(messageService.getRoomMessagesCursor(roomId, cursor, limit, userDetails.getUsername()));
+    }
 }

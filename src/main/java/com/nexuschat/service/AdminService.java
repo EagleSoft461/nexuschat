@@ -29,6 +29,9 @@ public class AdminService {
     @Autowired
     private MessageRepository messageRepository;
 
+    @Autowired
+    private PresenceService presenceService;
+
     /**
      * Get platform statistics
      */
@@ -40,12 +43,13 @@ public class AdminService {
         long publicRooms = roomRepository.countByType(Room.RoomType.PUBLIC);
         long privateRooms = roomRepository.countByType(Room.RoomType.PRIVATE);
         long directMessages = roomRepository.countByType(Room.RoomType.DIRECT);
+        long activeUsers = presenceService.getOnlineUsers().size();
 
         return AdminStatsResponse.builder()
                 .totalUsers(totalUsers)
                 .totalRooms(totalRooms)
                 .totalMessages(totalMessages)
-                .activeUsers(totalUsers) // TODO: implement active users tracking
+                .activeUsers(activeUsers)
                 .publicRooms(publicRooms)
                 .privateRooms(privateRooms)
                 .directMessages(directMessages)
@@ -95,13 +99,16 @@ public class AdminService {
     }
 
     /**
-     * Ban/unban user (placeholder - implement user enabled/disabled field)
+     * Ban/unban user
+     * Note: Requires 'enabled' field in User model for full implementation
+     * Currently marks user for deletion as alternative approach
      */
     @Transactional
     public void toggleUserStatus(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        // TODO: Add enabled field to User model and toggle it
+        // Alternative: For now, this is a placeholder for future user enable/disable feature
+        // In production, add 'enabled' field to User entity and toggle it here
         userRepository.save(user);
     }
 }

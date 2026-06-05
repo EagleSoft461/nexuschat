@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusChat - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .admin-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            padding: 0 30px;
+            background: white;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-public {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-private {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .badge-direct {
+            background: #17a2b8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>🛡️ NexusChat Admin Panel</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value" id="totalUsers">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Rooms</h3>
+                <div class="stat-value" id="totalRooms">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Messages</h3>
+                <div class="stat-value" id="totalMessages">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Public Rooms</h3>
+                <div class="stat-value" id="publicRooms">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Private Rooms</h3>
+                <div class="stat-value" id="privateRooms">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Direct Messages</h3>
+                <div class="stat-value" id="directMessages">-</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('users')">Users</div>
+            <div class="tab" onclick="showTab('rooms')">Rooms</div>
+        </div>
+
+        <div id="users" class="tab-content active">
+            <h2 style="margin-bottom: 20px;">User Management</h2>
+            <div id="usersTable"></div>
+        </div>
+
+        <div id="rooms" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Room Management</h2>
+            <div id="roomsTable"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/admin';
+        let token = localStorage.getItem('jwt_token');
+
+        // Check if admin
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'rooms') {
+                loadRooms();
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load stats');
+                
+                const stats = await response.json();
+                document.getElementById('totalUsers').textContent = stats.totalUsers;
+                document.getElementById('totalRooms').textContent = stats.totalRooms;
+                document.getElementById('totalMessages').textContent = stats.totalMessages;
+                document.getElementById('publicRooms').textContent = stats.publicRooms;
+                document.getElementById('privateRooms').textContent = stats.privateRooms;
+                document.getElementById('directMessages').textContent = stats.directMessages;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Not authorized. Admin access required.');
+                    logout();
+                }
+            }
+        }
+
+        async function loadUsers() {
+            const container = document.getElementById('usersTable');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/users?page=0&size=100`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load users');
+                
+                const users = await response.json();
+                
+                let html = '<table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Display Name</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+                
+                users.forEach(user => {
+                    html += `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.email}</td>
+                            <td>${user.displayName}</td>
+                            <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                <button class="action-btn btn-danger" onclick="deleteUser(${user.id}, '${user.username}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading users:', error);
+                container.innerHTML = '<div class="loading">Failed to load users</div>';
+            }
+        }
+
+        async function loadRooms() {
+            const container = document.getElementById('roomsTable');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/rooms?page=0&size=100`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load rooms');
+                
+                const rooms = await response.json();
+                
+                let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Creator</th><th>Members</th><th>Actions</th></tr></thead><tbody>';
+                
+                rooms.forEach(room => {
+                    const typeBadge = room.type === 'PUBLIC' ? 'badge-public' : room.type === 'PRIVATE' ? 'badge-private' : 'badge-direct';
+                    html += `
+                        <tr>
+                            <td>${room.id}</td>
+                            <td>${room.name}</td>
+                            <td><span class="badge ${typeBadge}">${room.type}</span></td>
+                            <td>${room.creatorUsername || 'N/A'}</td>
+                            <td>${room.memberCount || 0}</td>
+                            <td>
+                                <button class="action-btn btn-danger" onclick="deleteRoom(${room.id}, '${room.name}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+                container.innerHTML = '<div class="loading">Failed to load rooms</div>';
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete user');
+                
+                alert('User deleted successfully');
+                loadUsers();
+                loadStats();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Failed to delete user');
+            }
+        }
+
+        async function deleteRoom(roomId, roomName) {
+            if (!confirm(`Are you sure you want to delete room "${roomName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/rooms/${roomId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete room');
+                
+                alert('Room deleted successfully');
+                loadRooms();
+                loadStats();
+            } catch (error) {
+                console.error('Error deleting room:', error);
+                alert('Failed to delete room');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('username');
+            window.location.href = '/index.html';
+        }
+
+        // Load initial data
+        loadStats();
+        loadUsers();
+    </script>
+</body>
+</html>

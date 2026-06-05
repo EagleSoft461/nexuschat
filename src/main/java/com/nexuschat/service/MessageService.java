@@ -225,4 +225,38 @@ public class MessageService {
                 })
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Cursor-based pagination for messages.
+     * If cursor is null, returns the latest messages.
+     * If cursor is provided, returns messages older than the cursor.
+     */
+    @Transactional(readOnly = true)
+    public List<MessageResponse> getRoomMessagesCursor(Long roomId, Long cursor, int limit, String username) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        if (!roomMemberRepository.existsByRoomAndUser(room, user)) {
+            throw new IllegalStateException("You are not a member of this room");
+        }
+
+        Page<Message> messages;
+        if (cursor == null) {
+            // No cursor: return latest messages
+            messages = messageRepository.findByRoomAndDeletedFalseOrderByCreatedAtDesc(
+                    room, PageRequest.of(0, limit));
+        } else {
+            // With cursor: return messages before cursor (older)
+            messages = messageRepository.findByRoomBeforeCursor(
+                    room, cursor, PageRequest.of(0, limit));
+        }
+
+        return messages.getContent()
+                .stream()
+                .map(m -> MessageResponse.from(m, username))
+                .collect(Collectors.toList());
+    }
 }

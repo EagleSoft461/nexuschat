@@ -6,12 +6,15 @@
 
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2.5-6DB33F?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/EagleSoft461/nexuschat/ci.yml?branch=main&style=flat-square)](https://github.com/EagleSoft461/nexuschat/actions)
+[![Code Coverage](https://img.shields.io/codecov/c/github/EagleSoft461/nexuschat?style=flat-square)](https://codecov.io/gh/EagleSoft461/nexuschat)
+[![Quality Gate](https://img.shields.io/sonar/quality_gate/nexuschat?server=https%3A%2F%2Fsonarcloud.io&style=flat-square)](https://sonarcloud.io/dashboard?id=nexuschat)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![WebSocket](https://img.shields.io/badge/WebSocket-STOMP-35495E?style=flat-square)](https://stomp.github.io/)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis)](https://redis.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
-[![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens)](https://jwt.io/)
-[![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square&logo=apachemaven)](https://maven.apache.org/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=flat-square&logo=kubernetes)](https://kubernetes.io/)
 
 </div>
 
@@ -19,7 +22,16 @@
 
 ## 📌 Overview
 
-NexusChat is a production-ready real-time chat backend that demonstrates enterprise messaging patterns. It supports multi-room chat, JWT-based authentication, online presence tracking, and horizontal scaling via Redis Pub/Sub — meaning multiple application instances can serve clients simultaneously without losing message delivery.
+NexusChat is a **production-ready** real-time chat backend that demonstrates enterprise messaging patterns. It supports multi-room chat, JWT-based authentication, online presence tracking, and horizontal scaling via Redis Pub/Sub — meaning multiple application instances can serve clients simultaneously without losing message delivery.
+
+### 🎯 Key Highlights
+
+✅ **Production-Ready** — CI/CD, automated testing, code quality gates, database migrations  
+✅ **Horizontally Scalable** — Redis Pub/Sub enables multi-instance deployment  
+✅ **Enterprise Features** — Rate limiting, health checks, metrics, structured logging  
+✅ **Cloud-Native** — Docker & Kubernetes ready with manifests  
+✅ **Well-Tested** — 50%+ code coverage with JaCoCo, unit & integration tests  
+✅ **Quality Assured** — SonarCloud, Checkstyle, SpotBugs, OWASP dependency check
 
 ---
 
@@ -76,15 +88,33 @@ This architecture enables **horizontal scaling** — any number of app instances
 
 ## ✨ Features
 
-- 🔐 **JWT Authentication** — stateless auth with token validation on WebSocket handshake
+### Core Features
+- 🔐 **JWT Authentication** — stateless auth with access & refresh tokens, rotation on use
 - 💬 **Real-time Messaging** — STOMP over SockJS with room-based topics
 - 📡 **Redis Pub/Sub** — distributed message broadcasting for horizontal scaling
 - 🟢 **Presence System** — online/offline tracking with Redis TTL
-- 🏠 **Room Management** — create, join, leave public/private rooms
-- 💾 **Message Persistence** — full history stored in PostgreSQL with pagination
-- 🗑️ **Soft Delete** — messages are soft-deleted, history is preserved
-- 🐳 **Docker Ready** — single command deployment with Docker Compose
-- 🔒 **Security** — non-root Docker user, BCrypt password hashing, CSRF disabled for stateless API
+- 🏠 **Room Management** — create, join, leave public/private rooms + direct messages
+- 💾 **Message Persistence** — full history stored in PostgreSQL with cursor-based pagination
+- ✏️ **Message Editing** — edit sent messages with edit indicator
+- 🗑️ **Smart Delete** — delete for me (hide) vs delete for everyone (broadcast)
+- 📖 **Read Receipts** — track which messages users have seen
+- ⌨️ **Typing Indicators** — real-time typing notifications
+- 📎 **File Attachments** — support for file/image sharing
+
+### Production Features
+- 🚀 **CI/CD Pipeline** — GitHub Actions with automated testing & Docker publish
+- 📊 **Test Coverage** — JaCoCo with 50%+ minimum threshold
+- 🔍 **Code Quality** — Checkstyle, SpotBugs, SonarCloud integration
+- 🛡️ **Security Scanning** — OWASP Dependency Check for vulnerabilities
+- 🚦 **Rate Limiting** — Bucket4j token bucket (Redis-backed), per-user/IP
+- 📝 **Structured Logging** — JSON format with Logstash encoder (ELK/Loki ready)
+- 📈 **Metrics & Monitoring** — Prometheus metrics via Spring Boot Actuator
+- 🏥 **Health Checks** — Kubernetes-ready liveness/readiness probes
+- 🗄️ **Database Migration** — Flyway for version-controlled schema changes
+- 🐳 **Containerized** — Multi-stage Dockerfile with non-root user
+- ☸️ **Kubernetes Ready** — Complete manifests (Deployment, Service, HPA, Ingress, PVC)
+- 🔧 **Admin Panel** — Web UI for user & room management
+- 🌐 **API Documentation** — Swagger/OpenAPI with interactive UI
 
 ---
 
@@ -95,12 +125,23 @@ This architecture enables **horizontal scaling** — any number of app instances
 | Language | Java 17 |
 | Framework | Spring Boot 3.2.5 |
 | WebSocket | Spring WebSocket + STOMP + SockJS |
-| Security | Spring Security + JWT (jjwt 0.11) |
+| Security | Spring Security + JWT (jjwt 0.11) + BCrypt |
 | Database | PostgreSQL 16 + Spring Data JPA + Hibernate |
 | Cache / Pub-Sub | Redis 7 + Spring Data Redis |
-| Build | Maven |
+| Message Broker | RabbitMQ 3.13 (STOMP relay) |
+| Rate Limiting | Bucket4j (Redis-backed token bucket) |
+| Build Tool | Maven |
+| Database Migration | Flyway |
+| Testing | JUnit 5 + Mockito + Spring Boot Test |
+| Code Coverage | JaCoCo (50%+ threshold) |
+| Code Quality | Checkstyle + SpotBugs + SonarCloud |
+| Security Scanning | OWASP Dependency Check |
+| Logging | Logback + Logstash JSON Encoder |
+| Metrics | Micrometer + Prometheus |
 | Containerization | Docker + Docker Compose |
-| API Docs | Swagger / OpenAPI |
+| Orchestration | Kubernetes (manifests included) |
+| CI/CD | GitHub Actions |
+| API Docs | Swagger / OpenAPI 3.0 |
 
 ---
 

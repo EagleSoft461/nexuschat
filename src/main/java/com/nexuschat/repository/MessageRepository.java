@@ -28,4 +28,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     // Find the latest message in a room
     @Query("SELECT m FROM Message m JOIN FETCH m.sender WHERE m.room = :room AND m.deleted = false ORDER BY m.createdAt DESC")
     Page<Message> findLatestByRoom(@Param("room") Room room, Pageable pageable);
+
+    // Cursor-based pagination: messages before a cursor (older messages)
+    @Query("SELECT m FROM Message m JOIN FETCH m.sender WHERE m.room = :room AND m.deleted = false AND m.id < :cursor ORDER BY m.id DESC")
+    Page<Message> findByRoomBeforeCursor(@Param("room") Room room, @Param("cursor") Long cursor, Pageable pageable);
+
+    // Cursor-based pagination: messages after a cursor (newer messages)
+    @Query("SELECT m FROM Message m JOIN FETCH m.sender WHERE m.room = :room AND m.deleted = false AND m.id > :cursor ORDER BY m.id ASC")
+    Page<Message> findByRoomAfterCursor(@Param("room") Room room, @Param("cursor") Long cursor, Pageable pageable);
 }
