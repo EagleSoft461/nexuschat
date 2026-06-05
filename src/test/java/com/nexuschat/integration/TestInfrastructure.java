@@ -13,6 +13,10 @@ public final class TestInfrastructure {
     }
 
     public static boolean isAvailable() {
+        if ("true".equalsIgnoreCase(System.getenv("CI"))) {
+            return true;
+        }
+
         String pgHost = System.getenv().getOrDefault("SPRING_DATASOURCE_URL", "jdbc:postgresql://localhost:5432/nexuschat");
         String redisHost = System.getenv().getOrDefault("SPRING_DATA_REDIS_HOST", "localhost");
         int redisPort = Integer.parseInt(System.getenv().getOrDefault("SPRING_DATA_REDIS_PORT", "6379"));
