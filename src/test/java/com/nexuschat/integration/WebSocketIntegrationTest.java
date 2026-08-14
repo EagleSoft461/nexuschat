@@ -129,13 +129,35 @@ class WebSocketIntegrationTest {
         SockJsClient sockJsClient = new SockJsClient(transports);
 
         WebSocketStompClient stompClient = new WebSocketStompClient(sockJsClient);
-        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+
+        MappingJackson2MessageConverter messageConverter =
+                new MappingJackson2MessageConverter();
+        messageConverter.setObjectMapper(objectMapper);
+        stompClient.setMessageConverter(messageConverter);
 
         StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.add("Authorization", "Bearer " + jwtToken);
 
         StompSession session = stompClient.connectAsync(
-                        wsUrl, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {})
+                        wsUrl, new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {
+                            @Override
+                            public void handleException(
+                                    StompSession session,
+                                    StompCommand command,
+                                    StompHeaders headers,
+                                    byte[] payload,
+                                    Throwable exception) {
+                                exception.printStackTrace();
+                            }
+
+                            @Override
+                            public void handleTransportError(
+                                    StompSession session,
+                                    Throwable exception) {
+                                exception.printStackTrace();
+                            }
+                        }
+                )
                 .get(timeoutSeconds(), TimeUnit.SECONDS);
 
         assertNotNull(session);
@@ -153,6 +175,9 @@ class WebSocketIntegrationTest {
                 receivedMessages.add((MessageResponse) payload);
             }
         });
+
+        // Give the STOMP broker time to register the subscription
+        Thread.sleep(1000);
 
         // Act - Send message
         SendMessageRequest request = new SendMessageRequest();
