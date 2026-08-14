@@ -3,10 +3,24 @@ target/
 *.class
 *.jar
 *.war
+
+# IDE files
 .idea/
 *.iml
 .vscode/
+
+# Logs
 *.log
+
+# Environment and secrets
 .env
+.env.*
+!.env.example
+k8s/secret.yaml
+
+# Local Docker override
 docker-compose.override.yml
+
+# JaCoCo generated files
+target/jacoco.exec
 "@ | Out-File -Encoding utf8 .gitignore

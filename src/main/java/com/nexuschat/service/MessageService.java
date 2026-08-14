@@ -13,6 +13,8 @@ import com.nexuschat.repository.RoomMemberRepository;
 import com.nexuschat.repository.RoomRepository;
 import com.nexuschat.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
+
+    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
 
     @Autowired
     private MessageRepository messageRepository;
@@ -76,10 +80,17 @@ public class MessageService {
         message = messageRepository.save(message);
         MessageResponse response = MessageResponse.from(message);
 
+        log.info("Publishing WebSocket message: roomId={}, messageId={}, sender={}",
+                room.getId(), response.getId(), username);
+
         // Publish to Redis for real-time delivery
         redisMessagePublisher.publishMessage("chat:" + room.getId(), response);
 
+        log.info("Redis publish completed: channel=chat:{}, messageId={}",
+                room.getId(), response.getId());
+
         return response;
+
     }
 
     @Transactional(readOnly = true)

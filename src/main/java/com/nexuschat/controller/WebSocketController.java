@@ -13,6 +13,8 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
 import java.util.HashMap;
@@ -21,6 +23,8 @@ import java.util.Set;
 
 @Controller
 public class WebSocketController {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketController.class);
 
     @Autowired
     private MessageService messageService;
@@ -33,7 +37,11 @@ public class WebSocketController {
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Valid @Payload SendMessageRequest request, Principal principal) {
-        if (principal == null) return;
+        if (principal == null) {
+            log.warn("STOMP chat.send rejected because principal is null");
+            return;
+        }
+
         messageService.sendMessage(request, principal.getName());
     }
 
